@@ -1,6 +1,10 @@
 import type { NextPage } from "next";
 import Head from "next/head";
 import Image from "next/image";
+import { useState } from "react";
+import MainScreen from "../components/MainScreen";
+import Transaction from "../components/Transaction";
+import TokenSelector from "../components/TokenSelector";
 
 const Home: NextPage = () => {
   return (
@@ -12,8 +16,11 @@ const Home: NextPage = () => {
       </Head>
 
       <main className="w-full h-full flex flex-col justify-center items-center">
-        <div className="flex-1 flex max-w-3xl rounded-md border border-red-500">
-          <h1 className="">Check the ERC20 tokens available!</h1>
+        <h1 className="">Check the ERC20 tokens available!</h1>
+        <div className="max-w-3xl rounded-md border border-red-500 flex-1 flex flex-row justify-center items-center">
+          <Transaction />
+          <MainScreen />
+          <TokenSelector />
         </div>
       </main>
     </div>

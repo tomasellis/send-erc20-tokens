@@ -14,6 +14,11 @@ type MappedToken = {
 export default () => {
   const [open, setOpen] = useState(false);
   const [options, setOptions] = useState<readonly MappedToken[]>([]);
+  const [selectedToken, setSelectedToken] = useState<MappedToken>({
+    address: "",
+    name: "",
+    iconUrl: "",
+  });
   const loading = open && options.length === 0;
 
   useEffect(() => {
@@ -37,6 +42,10 @@ export default () => {
     };
   }, [loading]);
 
+  useEffect(() => {
+    console.log(selectedToken);
+  }, [selectedToken]);
+
   return (
     <Autocomplete
       id="asyncAutocomplete"
@@ -54,7 +63,7 @@ export default () => {
       options={options}
       loading={loading}
       limitTags={1}
-      onChange={(e, value) => console.log(value)}
+      onChange={(e, value) => setSelectedToken(value)}
       renderTags={(options, props) => {
         return options.map((option) => (
           <li {...props}>
@@ -81,6 +90,17 @@ export default () => {
           label="Pick an ERC20 token to gift!"
           InputProps={{
             ...params.InputProps,
+            startAdornment: (
+              <Fragment>
+                {selectedToken !== null ? (
+                  <Icon className="flex justify-center items-center">
+                    <img src={selectedToken.iconUrl} width="20px"></img>
+                  </Icon>
+                ) : (
+                  ""
+                )}
+              </Fragment>
+            ),
             endAdornment: (
               <Fragment>
                 {loading ? (

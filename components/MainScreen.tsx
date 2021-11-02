@@ -5,6 +5,7 @@ import {
 } from "@mycrypto/eth-scan";
 import react, { useEffect, useState } from "react";
 import { ethers, BigNumber } from "ethers";
+import connectWallet from "../utils/connectWallet";
 
 const MainScreen = () => {
   const [userAddress, setUserAddress] = useState<string>("");
@@ -36,6 +37,21 @@ const MainScreen = () => {
   return (
     <div className="w-60 h-96 rounded-md border border-red-500 flex flex-col">
       {`Send a token on the ${network} network`}
+      <button
+        onClick={async () => {
+          const address = await connectWallet();
+          switch (address) {
+            case "ERROR":
+              return alert("Error while connecting wallet");
+            case "NOMETAMASK":
+              return alert("Please install metamask");
+            default:
+              return setUserAddress(address);
+          }
+        }}
+      >
+        Connect your wallet!
+      </button>
       <div>
         <input
           type="radio"
@@ -68,11 +84,17 @@ const MainScreen = () => {
         style={{ border: "5px" }}
         onClick={async () => {
           const balances = await getTokensBalance(provider, userAddress, [
-            "0xdd1ad9a21ce722c151a836373babe42c868ce9a4",
+            "0x5592EC0cfb4dbc12D3aB100b257153436a1f0FEa",
+            "0x01BE23585060835E02B77ef475b0Cc51aA1e0709",
           ]);
           console.log(
-            "HERE",
-            Number(balances["0xdd1ad9a21ce722c151a836373babe42c868ce9a4"]) /
+            "DAI",
+            Number(balances["0x5592EC0cfb4dbc12D3aB100b257153436a1f0FEa"]) /
+              Math.pow(10, 18)
+          );
+          console.log(
+            "LINK",
+            Number(balances["0x01BE23585060835E02B77ef475b0Cc51aA1e0709"]) /
               Math.pow(10, 18)
           );
         }}

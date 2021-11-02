@@ -21,6 +21,7 @@ const getTokenList = async (): Promise<MappedToken[] | undefined> => {
       return mappedToken;
     });
 
+    console.log("SIZE", mappedTokens.length);
     return mappedTokens;
   } catch (err) {
     console.log("getTokenList", err);
@@ -54,10 +55,12 @@ type MappedToken = {
   address: string;
   name: string;
   iconUrl: string;
+  balance: number;
 };
 
 const graphUrl = `https://api.thegraph.com/subgraphs/name/kleros/t2cr`;
 
+// TO FIX: first:1000
 const tokensQuery = `query getTokens {
   registries{
     id

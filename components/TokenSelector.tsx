@@ -3,13 +3,8 @@ import TextField from "@mui/material/TextField";
 import Autocomplete from "@mui/material/Autocomplete";
 import CircularProgress from "@mui/material/CircularProgress";
 import getTokenList from "../utils/getTokenList";
+import { Icon } from "@mui/material";
 
-/*
-<li key={index}>
-                  {token.address}
-                  <Image src={token.iconUrl} height="50px" width="50px" />
-                </li>
-                 */
 type MappedToken = {
   address: string;
   name: string;
@@ -58,7 +53,28 @@ export default () => {
       getOptionLabel={(option) => option.name}
       options={options}
       loading={loading}
+      limitTags={1}
       onChange={(e, value) => console.log(value)}
+      renderTags={(options, props) => {
+        return options.map((option) => (
+          <li {...props}>
+            <Icon>
+              <img src={option.iconUrl} width="20px"></img>
+            </Icon>{" "}
+            {option.name}
+          </li>
+        ));
+      }}
+      renderOption={(props, option) => {
+        return (
+          <li {...props}>
+            <Icon>
+              <img src={option.iconUrl} width="20px"></img>
+            </Icon>{" "}
+            {option.name}
+          </li>
+        );
+      }}
       renderInput={(params) => (
         <TextField
           {...params}

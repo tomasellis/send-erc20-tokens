@@ -18,9 +18,7 @@ const Home: NextPage = () => {
       <main className="w-full h-full flex flex-col justify-center items-center">
         <h1 className="">Check the ERC20 tokens available!</h1>
         <div className="max-w-3xl rounded-md border border-red-500 flex-1 flex flex-row justify-center items-center">
-          <Transaction />
           <MainScreen />
-          <TokenSelector />
         </div>
       </main>
     </div>

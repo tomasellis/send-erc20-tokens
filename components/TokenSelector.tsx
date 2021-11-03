@@ -9,38 +9,23 @@ type MappedToken = {
   address: string;
   name: string;
   iconUrl: string;
+  balance: number;
 };
 
-export default () => {
+export default (props: { options: MappedToken[] }) => {
   const [open, setOpen] = useState(false);
-  const [options, setOptions] = useState<readonly MappedToken[]>([]);
+  const [options, setOptions] = useState<MappedToken[]>(props.options);
   const [selectedToken, setSelectedToken] = useState<MappedToken>({
     address: "",
     name: "",
     iconUrl: "",
+    balance: 0,
   });
   const loading = open && options.length === 0;
 
   useEffect(() => {
-    let active = true;
-
-    if (!loading) {
-      return undefined;
-    }
-
-    (async () => {
-      if (active) {
-        const tokenList = await getTokenList();
-        tokenList !== undefined
-          ? setOptions([...tokenList])
-          : console.log("Trouble in TokenSelectorGetting");
-      }
-    })();
-
-    return () => {
-      active = false;
-    };
-  }, [loading]);
+    setOptions(props.options);
+  }, [props.options]);
 
   useEffect(() => {
     console.log(selectedToken);
@@ -80,7 +65,8 @@ export default () => {
             <Icon>
               <img src={option.iconUrl} width="20px"></img>
             </Icon>{" "}
-            {option.name}
+            {option.name} |{" "}
+            <span className="text-blue-500"> {option.balance}</span>
           </li>
         );
       }}
@@ -105,7 +91,9 @@ export default () => {
               <Fragment>
                 {loading ? (
                   <CircularProgress color="inherit" size={20} />
-                ) : null}
+                ) : (
+                  `${selectedToken.balance}`
+                )}
                 {params.InputProps.endAdornment}
               </Fragment>
             ),

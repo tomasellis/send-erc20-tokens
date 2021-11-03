@@ -1,17 +1,25 @@
-import {
-  BalanceMap,
-  getTokenBalances,
-  getTokensBalance,
-} from "@mycrypto/eth-scan";
+import { getTokensBalance } from "@mycrypto/eth-scan";
 import react, { useEffect, useState } from "react";
 import { ethers, BigNumber } from "ethers";
 import connectWallet from "../utils/connectWallet";
+import getTokenList from "../utils/getTokenList";
+import TokenSelector from "./TokenSelector";
+import { CircularProgress } from "@mui/material";
+import updateTokensBalance from "../utils/updateTokensBalance";
+
+type MappedToken = {
+  address: string;
+  name: string;
+  iconUrl: string;
+  balance: number;
+};
 
 const MainScreen = () => {
   const [userAddress, setUserAddress] = useState<string>("");
   const [network, setNetwork] = useState<"mainnet" | "rinkeby" | string>(
     "rinkeby"
   );
+  const [tokenList, setTokenList] = useState<MappedToken[]>();
 
   let provider = new ethers.providers.JsonRpcProvider(
     "https://rinkeby.infura.io/v3/927415a05250482eaee7eda6db84bd5e"
@@ -30,9 +38,28 @@ const MainScreen = () => {
     }
   }, [network]);
 
+  // Load page, load tokens
   useEffect(() => {
-    console.log(provider);
-  }, [provider]);
+    (async () => {
+      const tokenList = await getTokenList();
+      setTokenList(tokenList);
+    })();
+  }, []);
+
+  // After getting tokens, and if user wallet connected, load balances
+  useEffect(() => {
+    if (userAddress !== "" && tokenList !== undefined) {
+      (async () => {
+        const updatedTokensBalance = await updateTokensBalance(
+          userAddress,
+          tokenList,
+          provider
+        );
+        console.log(updatedTokensBalance);
+        setTokenList(updatedTokensBalance);
+      })();
+    }
+  }, [userAddress]);
 
   return (
     <div className="w-60 h-96 rounded-md border border-red-500 flex flex-col">
@@ -101,6 +128,12 @@ const MainScreen = () => {
       >
         Here
       </button>
+
+      {tokenList !== undefined ? (
+        <TokenSelector options={tokenList} />
+      ) : (
+        <CircularProgress color="inherit" size={30} />
+      )}
     </div>
   );
 };

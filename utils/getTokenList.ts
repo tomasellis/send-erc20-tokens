@@ -1,6 +1,6 @@
 import axios, { AxiosResponse } from "axios";
 
-const getTokenList = async (): Promise<MappedToken[] | undefined> => {
+const getTokenList = async (): Promise<MappedToken[]> => {
   try {
     const { data }: AxiosResponse<TokenData> = await axios({
       url: graphUrl,
@@ -17,14 +17,39 @@ const getTokenList = async (): Promise<MappedToken[] | undefined> => {
         address: token.address,
         name: token.name,
         iconUrl: klerosIpfsBaseUrl + token.symbolMultihash,
+        balance: 0,
       };
       return mappedToken;
     });
 
+    // TO FIX: remove test tokens ---------------------------------------
+
+    let tk: MappedToken = {
+      address: "0x5592EC0cfb4dbc12D3aB100b257153436a1f0FEa",
+      balance: 0,
+      iconUrl: "",
+      name: "DAIDev",
+    };
+
+    mappedTokens.push(tk);
+
+    tk = {
+      address: "0x01BE23585060835E02B77ef475b0Cc51aA1e0709",
+      balance: 0,
+      iconUrl: "",
+      name: "LINKDev",
+    };
+
+    mappedTokens.push(tk);
+
+    // TO FIX: remove test tokens -----------------------------------------
+
     console.log("SIZE", mappedTokens.length);
+
     return mappedTokens;
   } catch (err) {
     console.log("getTokenList", err);
+    return [{ address: "0", balance: 0, iconUrl: "", name: "Error" }];
   }
 };
 

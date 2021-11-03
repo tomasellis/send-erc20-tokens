@@ -12,7 +12,10 @@ type MappedToken = {
   balance: number;
 };
 
-export default (props: { options: MappedToken[] }) => {
+export default (props: {
+  options: MappedToken[];
+  setSelectedToken: react.Dispatch<react.SetStateAction<MappedToken>>;
+}) => {
   const [open, setOpen] = useState(false);
   const [options, setOptions] = useState<MappedToken[]>(props.options);
   const [selectedToken, setSelectedToken] = useState<MappedToken>({
@@ -29,6 +32,7 @@ export default (props: { options: MappedToken[] }) => {
 
   useEffect(() => {
     console.log(selectedToken);
+    props.setSelectedToken(selectedToken);
   }, [selectedToken]);
 
   return (
@@ -65,8 +69,10 @@ export default (props: { options: MappedToken[] }) => {
             <Icon>
               <img src={option.iconUrl} width="20px"></img>
             </Icon>{" "}
-            {option.name} |{" "}
-            <span className="text-blue-500"> {option.balance}</span>
+            {option.name} |&#160;
+            <span className="text-blue-500 text-sm justify-self-end">
+              {option.balance}
+            </span>
           </li>
         );
       }}
@@ -92,7 +98,7 @@ export default (props: { options: MappedToken[] }) => {
                 {loading ? (
                   <CircularProgress color="inherit" size={20} />
                 ) : (
-                  `${selectedToken.balance}`
+                  <span className="text-blue-500">{selectedToken.balance}</span>
                 )}
                 {params.InputProps.endAdornment}
               </Fragment>

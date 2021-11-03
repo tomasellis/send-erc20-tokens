@@ -6,6 +6,7 @@ import getTokenList from "../utils/getTokenList";
 import TokenSelector from "./TokenSelector";
 import { CircularProgress } from "@mui/material";
 import updateTokensBalance from "../utils/updateTokensBalance";
+import transferToken from "../utils/transferToken";
 
 type MappedToken = {
   address: string;
@@ -20,6 +21,14 @@ const MainScreen = () => {
     "rinkeby"
   );
   const [tokenList, setTokenList] = useState<MappedToken[]>();
+  const [quantityToSend, setQuantityToSend] = useState<string>("");
+  const [receiverAddress, setReceiverAddress] = useState<string>("");
+  const [selectedToken, setSelectedToken] = useState<MappedToken>({
+    address: "",
+    iconUrl: "",
+    balance: 0,
+    name: "NULL",
+  });
 
   let provider = new ethers.providers.JsonRpcProvider(
     "https://rinkeby.infura.io/v3/927415a05250482eaee7eda6db84bd5e"
@@ -103,8 +112,8 @@ const MainScreen = () => {
         <label>Mainnet</label>
       </div>
       <input
-        onChange={(e) => setUserAddress(e.target.value)}
-        placeholder="Please input an address"
+        onChange={(e) => setReceiverAddress(e.target.value)}
+        placeholder="Please input the address you are gifting to!"
       />
       {userAddress !== "" ? `The user address is: ${userAddress}` : ""}
       <button
@@ -130,10 +139,31 @@ const MainScreen = () => {
       </button>
 
       {tokenList !== undefined ? (
-        <TokenSelector options={tokenList} />
+        <TokenSelector
+          options={tokenList}
+          setSelectedToken={setSelectedToken}
+        />
       ) : (
         <CircularProgress color="inherit" size={30} />
       )}
+      <hr />
+      <input
+        placeholder={"How many tokens to send?"}
+        onChange={(e) => setQuantityToSend(e.target.value)}
+      />
+      <button
+        onClick={async () => {
+          console.log("Starting transfer");
+          await transferToken(
+            receiverAddress,
+            selectedToken.address,
+            quantityToSend
+          );
+          console.log("Finished transfer");
+        }}
+      >
+        Transfer
+      </button>
     </div>
   );
 };

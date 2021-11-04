@@ -1,52 +1,55 @@
 import axios, { AxiosResponse } from "axios";
 
-const getTokenList = async (): Promise<MappedToken[]> => {
+const getTokenList = async (network: "mainnet" | "rinkeby"): Promise<MappedToken[]> => {
   try {
-    const { data }: AxiosResponse<TokenData> = await axios({
-      url: graphUrl,
-      method: "POST",
-      data: {
-        query: tokensQuery,
-      },
-    });
+    if(network === "mainnet"){
+      const { data }: AxiosResponse<TokenData> = await axios({
+        url: graphUrl,
+        method: "POST",
+        data: {
+          query: tokensQuery,
+        },
+      });
+  
+      const registries = data.data.registries;
+  
+      const mappedTokens = registries[0].tokens.map((token) => {
+        let mappedToken: MappedToken = {
+          address: token.address,
+          name: token.name,
+          iconUrl: klerosIpfsBaseUrl + token.symbolMultihash,
+          balance: 0,
+        };
+        return mappedToken;
+      });
 
-    const registries = data.data.registries;
+      return mappedTokens
 
-    const mappedTokens = registries[0].tokens.map((token) => {
-      let mappedToken: MappedToken = {
-        address: token.address,
-        name: token.name,
-        iconUrl: klerosIpfsBaseUrl + token.symbolMultihash,
+    } else {
+
+      let mappedTokens: MappedToken[] = []
+
+      let tk: MappedToken = {
+        address: "0x5592EC0cfb4dbc12D3aB100b257153436a1f0FEa",
         balance: 0,
+        iconUrl: "",
+        name: "DAIDev",
       };
-      return mappedToken;
-    });
-
-    // TO FIX: remove test tokens ---------------------------------------
-
-    let tk: MappedToken = {
-      address: "0x5592EC0cfb4dbc12D3aB100b257153436a1f0FEa",
-      balance: 0,
-      iconUrl: "",
-      name: "DAIDev",
-    };
-
-    mappedTokens.push(tk);
-
-    tk = {
-      address: "0x01BE23585060835E02B77ef475b0Cc51aA1e0709",
-      balance: 0,
-      iconUrl: "",
-      name: "LINKDev",
-    };
-
-    mappedTokens.push(tk);
-
-    // TO FIX: remove test tokens -----------------------------------------
-
-    console.log("SIZE", mappedTokens.length);
-
-    return mappedTokens;
+  
+      mappedTokens.push(tk);
+  
+      tk = {
+        address: "0x01BE23585060835E02B77ef475b0Cc51aA1e0709",
+        balance: 0,
+        iconUrl: "",
+        name: "LINKDev",
+      };
+  
+      mappedTokens.push(tk);
+  
+      return mappedTokens
+      // TO FIX: remove test tokens -----------------------------------------
+    }
   } catch (err) {
     console.log("getTokenList", err);
     return [{ address: "0", balance: 0, iconUrl: "", name: "Error" }];

@@ -17,9 +17,7 @@ type MappedToken = {
 
 const MainScreen = () => {
   const [userAddress, setUserAddress] = useState<string>("");
-  const [network, setNetwork] = useState<"mainnet" | "rinkeby" | string>(
-    "rinkeby"
-  );
+  const [network, setNetwork] = useState<"mainnet" | "rinkeby">("rinkeby");
   const [tokenList, setTokenList] = useState<MappedToken[]>();
   const [quantityToSend, setQuantityToSend] = useState<string>("");
   const [receiverAddress, setReceiverAddress] = useState<string>("");
@@ -50,7 +48,7 @@ const MainScreen = () => {
   // Load page, load tokens
   useEffect(() => {
     (async () => {
-      const tokenList = await getTokenList();
+      const tokenList = await getTokenList(network);
       setTokenList(tokenList);
     })();
   }, []);
@@ -95,7 +93,7 @@ const MainScreen = () => {
           name="Rinkeby"
           value="rinkeby"
           checked={network === "rinkeby"}
-          onChange={(e) => setNetwork(e.target.value)}
+          onChange={(e) => setNetwork("rinkeby")}
         />
         <label>Rinkeby</label>
       </div>
@@ -107,7 +105,7 @@ const MainScreen = () => {
           name="Mainnet"
           value="mainnet"
           checked={network === "mainnet"}
-          onChange={(e) => setNetwork(e.target.value)}
+          onChange={(e) => setNetwork("mainnet")}
         />
         <label>Mainnet</label>
       </div>
@@ -116,28 +114,6 @@ const MainScreen = () => {
         placeholder="Please input the address you are gifting to!"
       />
       {userAddress !== "" ? `The user address is: ${userAddress}` : ""}
-      <button
-        style={{ border: "5px" }}
-        onClick={async () => {
-          const balances = await getTokensBalance(provider, userAddress, [
-            "0x5592EC0cfb4dbc12D3aB100b257153436a1f0FEa",
-            "0x01BE23585060835E02B77ef475b0Cc51aA1e0709",
-          ]);
-          console.log(
-            "DAI",
-            Number(balances["0x5592EC0cfb4dbc12D3aB100b257153436a1f0FEa"]) /
-              Math.pow(10, 18)
-          );
-          console.log(
-            "LINK",
-            Number(balances["0x01BE23585060835E02B77ef475b0Cc51aA1e0709"]) /
-              Math.pow(10, 18)
-          );
-        }}
-      >
-        Here
-      </button>
-
       {tokenList !== undefined ? (
         <TokenSelector
           options={tokenList}
@@ -160,6 +136,14 @@ const MainScreen = () => {
             quantityToSend
           );
           console.log("Finished transfer");
+          if (tokenList !== undefined) {
+            const updatedTokensBalance = await updateTokensBalance(
+              userAddress,
+              tokenList,
+              provider
+            );
+            setTokenList(updatedTokensBalance);
+          }
         }}
       >
         Transfer

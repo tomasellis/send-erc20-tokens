@@ -24,7 +24,6 @@ export default (props: {
     iconUrl: "",
     balance: 0,
   });
-  const loading = open && options.length === 0;
 
   useEffect(() => {
     setOptions(props.options);
@@ -50,19 +49,8 @@ export default (props: {
       isOptionEqualToValue={(option, value) => option.address === value.address}
       getOptionLabel={(option) => option.name}
       options={options}
-      loading={loading}
       limitTags={1}
       onChange={(e, value) => setSelectedToken(value)}
-      renderTags={(options, props) => {
-        return options.map((option) => (
-          <li {...props}>
-            <Icon>
-              <img src={option.iconUrl} width="20px"></img>
-            </Icon>{" "}
-            {option.name}
-          </li>
-        ));
-      }}
       renderOption={(props, option) => {
         return (
           <li {...props}>
@@ -95,11 +83,11 @@ export default (props: {
             ),
             endAdornment: (
               <Fragment>
-                {loading ? (
+                <span className="text-blue-500">{selectedToken.balance}</span>
+                {/* {loading ? (
                   <CircularProgress color="inherit" size={20} />
                 ) : (
-                  <span className="text-blue-500">{selectedToken.balance}</span>
-                )}
+                )} */}
                 {params.InputProps.endAdornment}
               </Fragment>
             ),

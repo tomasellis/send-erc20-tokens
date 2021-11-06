@@ -7,6 +7,7 @@ import TokenSelector from "./TokenSelector";
 import { CircularProgress } from "@mui/material";
 import updateTokensBalance from "../utils/updateTokensBalance";
 import transferToken from "../utils/transferToken";
+import getUserTransactions from "../utils/getUserTransactions";
 
 type MappedToken = {
   address: string;
@@ -57,6 +58,7 @@ const MainScreen = () => {
   useEffect(() => {
     if (userAddress !== "" && tokenList !== undefined) {
       (async () => {
+        await getUserTransactions(userAddress);
         const updatedTokensBalance = await updateTokensBalance(
           userAddress,
           tokenList,

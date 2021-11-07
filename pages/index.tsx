@@ -3,7 +3,7 @@ import Head from "next/head";
 import Image from "next/image";
 import { useState } from "react";
 import MainScreen from "../components/MainScreen";
-import Transaction from "../components/Transaction";
+import Transaction from "../components/Transactions";
 import TokenSelector from "../components/TokenSelector";
 
 const Home: NextPage = () => {

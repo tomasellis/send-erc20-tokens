@@ -7,7 +7,9 @@ import TokenSelector from "./TokenSelector";
 import { CircularProgress } from "@mui/material";
 import updateTokensBalance from "../utils/updateTokensBalance";
 import transferToken from "../utils/transferToken";
-import getUserTransactions from "../utils/getUserTransactions";
+import getAllUserTransactions from "../utils/getAllUserTransactionsData";
+import { useInterval } from "../utils/useInterval";
+import { cp } from "fs/promises";
 
 type MappedToken = {
   address: string;
@@ -16,23 +18,54 @@ type MappedToken = {
   balance: number;
 };
 
+type EtherscanTransactionResponse = {
+  blockNumber: string;
+  timestamp: string;
+  hash: string;
+  nonce: string;
+  blockHash: string;
+  transactionIndex: string;
+  from: string;
+  to: string;
+  value: string;
+  gas: string;
+  gasPrice: string;
+  isError: string;
+  txreceipt_status: string;
+  input: string;
+  contractAddress: string;
+  cumulativeGasUsed: string;
+  gasUsed: string;
+  confirmations: string;
+};
+
+type SpedUpResult = {
+  status: "ChangedGas" | "Same";
+  txs: EtherscanTransactionResponse[];
+};
+
 const MainScreen = () => {
   const [userAddress, setUserAddress] = useState<string>("");
   const [network, setNetwork] = useState<"mainnet" | "rinkeby">("rinkeby");
   const [tokenList, setTokenList] = useState<MappedToken[]>();
-  const [quantityToSend, setQuantityToSend] = useState<string>("");
-  const [receiverAddress, setReceiverAddress] = useState<string>("");
   const [selectedToken, setSelectedToken] = useState<MappedToken>({
     address: "",
     iconUrl: "",
     balance: 0,
     name: "NULL",
   });
+  const [quantityToSend, setQuantityToSend] = useState<string>("");
+  const [receiverAddress, setReceiverAddress] = useState<string>("");
+  const [transactions, setTransactions] = useState<SpedUpResult>({
+    status: "Same",
+    txs: [],
+  });
 
   let provider = new ethers.providers.JsonRpcProvider(
     "https://rinkeby.infura.io/v3/927415a05250482eaee7eda6db84bd5e"
   );
 
+  // Change provider when changing networks
   useEffect(() => {
     if (network === "mainnet") {
       provider = new ethers.providers.JsonRpcProvider(
@@ -58,7 +91,17 @@ const MainScreen = () => {
   useEffect(() => {
     if (userAddress !== "" && tokenList !== undefined) {
       (async () => {
-        await getUserTransactions(userAddress);
+        // Update transactions list whenever the user changes address
+        const transactionsData = await getAllUserTransactions(
+          userAddress,
+          network
+        );
+        setTransactions({
+          ...transactions,
+          txs: transactionsData.txs,
+          status: transactionsData.status,
+        });
+
         const updatedTokensBalance = await updateTokensBalance(
           userAddress,
           tokenList,
@@ -69,6 +112,24 @@ const MainScreen = () => {
       })();
     }
   }, [userAddress]);
+
+  // While gas changed, poll
+  useEffect(() => {
+    if (transactions.status === "ChangedGas") {
+      useInterval(async () => {
+        console.log("Checking if gas same");
+        const transactionsData = await getAllUserTransactions(
+          userAddress,
+          network
+        );
+        setTransactions({
+          ...transactions,
+          txs: transactionsData.txs,
+          status: transactionsData.status,
+        });
+      }, 5);
+    }
+  }, [transactions.status]);
 
   return (
     <div className="w-60 h-96 rounded-md border border-red-500 flex flex-col">
@@ -149,6 +210,21 @@ const MainScreen = () => {
         }}
       >
         Transfer
+      </button>
+      <button
+        onClick={async () => {
+          const transactionsData = await getAllUserTransactions(
+            userAddress,
+            network
+          );
+          setTransactions({
+            ...transactions,
+            txs: transactionsData.txs,
+            status: transactionsData.status,
+          });
+        }}
+      >
+        Check transactions
       </button>
     </div>
   );

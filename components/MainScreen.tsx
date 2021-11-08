@@ -7,7 +7,7 @@ import TokenSelector from "./TokenSelector";
 import { CircularProgress } from "@mui/material";
 import updateTokensBalance from "../utils/updateTokensBalance";
 import transferToken from "../utils/transferToken";
-import getAllUserTransactions from "../utils/getAllUserTransactionsData";
+import getAllUserTransactionsData from "../utils/getAllUserTransactionsData";
 import { useInterval } from "../utils/useInterval";
 import { cp } from "fs/promises";
 
@@ -40,8 +40,12 @@ type EtherscanTransactionResponse = {
 };
 
 type SpedUpResult = {
-  status: "ChangedGas" | "Same";
-  txs: EtherscanTransactionResponse[];
+  status: "Diff" | "Same";
+  txs: Dictionary<EtherscanTransactionResponse>;
+};
+
+type Dictionary<T> = {
+  [Key: string]: T;
 };
 
 const MainScreen = () => {
@@ -58,7 +62,7 @@ const MainScreen = () => {
   const [receiverAddress, setReceiverAddress] = useState<string>("");
   const [transactions, setTransactions] = useState<SpedUpResult>({
     status: "Same",
-    txs: [],
+    txs: {},
   });
 
   let provider = new ethers.providers.JsonRpcProvider(
@@ -92,7 +96,7 @@ const MainScreen = () => {
     if (userAddress !== "" && tokenList !== undefined) {
       (async () => {
         // Update transactions list whenever the user changes address
-        const transactionsData = await getAllUserTransactions(
+        const transactionsData = await getAllUserTransactionsData(
           userAddress,
           network
         );
@@ -115,10 +119,10 @@ const MainScreen = () => {
 
   // While gas changed, poll
   useEffect(() => {
-    if (transactions.status === "ChangedGas") {
+    if (transactions.status === "Diff") {
       useInterval(async () => {
         console.log("Checking if gas same");
-        const transactionsData = await getAllUserTransactions(
+        const transactionsData = await getAllUserTransactionsData(
           userAddress,
           network
         );
@@ -132,100 +136,120 @@ const MainScreen = () => {
   }, [transactions.status]);
 
   return (
-    <div className="w-60 h-96 rounded-md border border-red-500 flex flex-col">
-      {`Send a token on the ${network} network`}
-      <button
-        onClick={async () => {
-          const address = await connectWallet();
-          switch (address) {
-            case "ERROR":
-              return alert("Error while connecting wallet");
-            case "NOMETAMASK":
-              return alert("Please install metamask");
-            default:
-              return setUserAddress(address);
-          }
-        }}
+    <div
+      id="MainScreen"
+      className="w-full h-full flex-1 flex flex-col flex-nowrap items-center"
+    >
+      {/* Banner */}
+      <div
+        id="Banner"
+        className="w-full h-auto flex justify-end bg-bannerPurple"
       >
-        Connect your wallet!
-      </button>
-      <div>
-        <input
-          type="radio"
-          id="Rinkebty"
-          name="Rinkeby"
-          value="rinkeby"
-          checked={network === "rinkeby"}
-          onChange={(e) => setNetwork("rinkeby")}
-        />
-        <label>Rinkeby</label>
+        <button
+          className="px-3 py-2 my-3 mr-3 rounded-xl text-accentPurple border-2 border-accentPurple hover:bg-accentPurple hover:text-bannerPurple"
+          onClick={() => {
+            const address = connectWallet();
+            switch (address) {
+              case "ERROR":
+                return alert("Error while connecting wallet");
+              case "NOMETAMASK":
+                return alert("Please install metamask");
+              default:
+                return setUserAddress(address);
+            }
+          }}
+        >
+          Connect wallet
+        </button>
       </div>
+      {/* Transfer UI */}
+      <div className="h-full w-full flex flex-col justify-center items-center">
+        <div
+          id="MainUI"
+          style={{ borderRadius: "3px" }}
+          className="border border-borderGrey w-2/5 h-5/6 px-9"
+        >
+          <span className="mt-10">Send an ERC20 token</span>
 
-      <div>
-        <input
-          type="radio"
-          id="Mainnet"
-          name="Mainnet"
-          value="mainnet"
-          checked={network === "mainnet"}
-          onChange={(e) => setNetwork("mainnet")}
-        />
-        <label>Mainnet</label>
+          <div>
+            <input
+              type="radio"
+              id="Rinkebty"
+              name="Rinkeby"
+              value="rinkeby"
+              checked={network === "rinkeby"}
+              onChange={(e) => setNetwork("rinkeby")}
+            />
+            <label>Rinkeby</label>
+          </div>
+
+          <div>
+            <input
+              type="radio"
+              id="Mainnet"
+              name="Mainnet"
+              value="mainnet"
+              checked={network === "mainnet"}
+              onChange={(e) => setNetwork("mainnet")}
+            />
+            <label>Mainnet</label>
+          </div>
+          <input
+            onChange={(e) => setReceiverAddress(e.target.value)}
+            placeholder="Please input the address you are gifting to!"
+          />
+          {userAddress !== "" ? `The user address is: ${userAddress}` : ""}
+          {tokenList !== undefined ? (
+            <TokenSelector
+              options={tokenList}
+              setSelectedToken={setSelectedToken}
+            />
+          ) : (
+            <CircularProgress color="inherit" size={30} />
+          )}
+          <hr />
+          <input
+            placeholder={"How many tokens to send?"}
+            onChange={(e) => setQuantityToSend(e.target.value)}
+          />
+          <button
+            onClick={async () => {
+              console.log("Starting transfer");
+              await transferToken(
+                receiverAddress,
+                selectedToken.address,
+                quantityToSend
+              );
+              console.log("Finished transfer");
+              if (tokenList !== undefined) {
+                const updatedTokensBalance = await updateTokensBalance(
+                  userAddress,
+                  tokenList,
+                  provider
+                );
+                setTokenList(updatedTokensBalance);
+              }
+            }}
+          >
+            Transfer
+          </button>
+          <button
+            onClick={async () => {
+              const transactionsData = await getAllUserTransactionsData(
+                userAddress,
+                network
+              );
+              setTransactions({
+                ...transactions,
+                txs: transactionsData.txs,
+                status: transactionsData.status,
+              });
+            }}
+          >
+            Check transactions
+          </button>
+        </div>
       </div>
-      <input
-        onChange={(e) => setReceiverAddress(e.target.value)}
-        placeholder="Please input the address you are gifting to!"
-      />
-      {userAddress !== "" ? `The user address is: ${userAddress}` : ""}
-      {tokenList !== undefined ? (
-        <TokenSelector
-          options={tokenList}
-          setSelectedToken={setSelectedToken}
-        />
-      ) : (
-        <CircularProgress color="inherit" size={30} />
-      )}
-      <hr />
-      <input
-        placeholder={"How many tokens to send?"}
-        onChange={(e) => setQuantityToSend(e.target.value)}
-      />
-      <button
-        onClick={async () => {
-          console.log("Starting transfer");
-          await transferToken(
-            receiverAddress,
-            selectedToken.address,
-            quantityToSend
-          );
-          console.log("Finished transfer");
-          if (tokenList !== undefined) {
-            const updatedTokensBalance = await updateTokensBalance(
-              userAddress,
-              tokenList,
-              provider
-            );
-            setTokenList(updatedTokensBalance);
-          }
-        }}
-      >
-        Transfer
-      </button>
-      <button
-        onClick={async () => {
-          const transactionsData = await getAllUserTransactions(
-            userAddress,
-            network
-          );
-          setTransactions({
-            ...transactions,
-            txs: transactionsData.txs,
-            status: transactionsData.status,
-          });
-        }}
-      >
-        Check transactions
-      </button>
     </div>
   );
 };

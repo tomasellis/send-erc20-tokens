@@ -1,17 +1,21 @@
-const checkLocallySavedTransactions = (address: string) => {
-  const localString = localStorage.getItem(address);
-  if (localString !== null) {
-    const locallyStoredTx: EtherscanTransactionResponse[] =
-      JSON.parse(localString);
-    console.log("Found local tx for:", address);
-    console.log("Here they are:", locallyStoredTx);
-    return locallyStoredTx;
+const getLocallySavedTransactions = (userAddress: string) => {
+  const localStringDictionary = localStorage.getItem(userAddress);
+  if (localStringDictionary !== null) {
+    const locallyStoredTxs: Dictionary<EtherscanTransactionResponse> =
+      JSON.parse(localStringDictionary);
+    console.log("Found local tx for:", userAddress);
+    console.log("Here they are:", locallyStoredTxs);
+    return locallyStoredTxs;
   }
-  console.log("No local tx saved for:", address);
-  return "";
+  console.log("No local tx saved for:", userAddress);
+  return null;
 };
 
-export default checkLocallySavedTransactions;
+export default getLocallySavedTransactions;
+
+type Dictionary<T> = {
+  [Key: string]: T;
+};
 
 type EtherscanTransactionResponse = {
   blockNumber: string;

@@ -15,11 +15,8 @@ const Home: NextPage = () => {
         <link rel="icon" href="/favicon.ico" />
       </Head>
 
-      <main className="w-full h-full flex flex-col justify-center items-center">
-        <h1 className="">Check the ERC20 tokens available!</h1>
-        <div className="max-w-3xl rounded-md border border-red-500 flex-1 flex flex-row justify-center items-center">
-          <MainScreen />
-        </div>
+      <main className="w-screen h-screen flex">
+        <MainScreen />
       </main>
     </div>
   );

@@ -1,6 +1,7 @@
 import axios from "axios";
-import checkIfSpedUpTx from "./checkIfSpedUpTx";
-import checkLocallySavedTransactions from "./getLocallySavedTransactions";
+import checkIfSpedUpOrNewTx from "./checkIfSpedUpOrNewTx";
+import createTxDictionary from "./createTxDictionary";
+import getLocallySavedTransactions from "./getLocallySavedTransactions";
 
 const etherscanApiToken = process.env.NEXT_PUBLIC_ETHERSCAN_API_TOKEN;
 
@@ -8,37 +9,30 @@ const getAllUserTransactionsData = async (
   address: string,
   network: "mainnet" | "rinkeby"
 ): Promise<SpedUpResult> => {
-  console.log("TOKEN", etherscanApiToken);
-
   const txEndpoint = `${
     network === "mainnet" ? etherscanBaseURL : etherscanRinkebyBaseURL
-  }?module=account&action=txlist&address=${address}&startblock=9000000&endblock=99999999&offset=10&page=1&sort=desc&apikey=${etherscanApiToken}`;
+  }?module=account&action=txlist&address=${address}&startblock=9000000&endblock=99999999&offset=25&sort=desc&apikey=${etherscanApiToken}`;
 
   const res: { data: EtherscanResponse } = await axios.get(txEndpoint);
 
-  console.log("RES DATA", res.data);
+  // Api data
+  const rawApiTxs = res.data.result;
+  console.log("API TXS", rawApiTxs);
 
-  // Transactions from api
-  const apiTxs: EtherscanTransactionResponse[] = res.data.result.map((tx) => {
-    return { ...tx, speedUp: false };
-  });
+  // Local data
+  let localTxsDictionary = getLocallySavedTransactions(address);
+  console.log("LOCAL TXS", localTxsDictionary);
 
-  // Locally saved tx
-  const localTxs = checkLocallySavedTransactions(address);
-  console.log("LOCAL TXS IN GE ALL", localTxs);
-
-  if (localTxs === "") {
-    // There's nothing saved locally
-    // Save the api response
-    localStorage.setItem(address, JSON.stringify(apiTxs));
-    return { status: "Same", txs: apiTxs };
+  // Check for change
+  if (localTxsDictionary !== null) {
+    return checkIfSpedUpOrNewTx(localTxsDictionary, rawApiTxs, address);
   } else {
-    // Check if something changed
-    const spedUpResult = checkIfSpedUpTx(localTxs, apiTxs);
-    if (spedUpResult.status === "ChangedGas")
-      localStorage.setItem(address, JSON.stringify(spedUpResult.txs));
-    console.log("Checking if some tx changed:", spedUpResult.status);
-    return spedUpResult;
+    // Create tx dictionary
+    const newTxsDictionary = createTxDictionary(rawApiTxs, address);
+    // Add to local dictionary
+    localStorage.setItem(address, JSON.stringify(newTxsDictionary));
+    console.log("NEW DICTIONARY", newTxsDictionary);
+    return { status: "Same", txs: newTxsDictionary };
   }
 };
 
@@ -49,9 +43,13 @@ export default getAllUserTransactionsData;
 const etherscanBaseURL = "https://api.etherscan.io/api";
 const etherscanRinkebyBaseURL = "https://api-rinkeby.etherscan.io/api";
 
+type Dictionary<T> = {
+  [Key: string]: T;
+};
+
 type SpedUpResult = {
-  status: "ChangedGas" | "Same";
-  txs: EtherscanTransactionResponse[];
+  status: "Diff" | "Same";
+  txs: Dictionary<EtherscanTransactionResponse>;
 };
 
 type EtherscanResponse = {

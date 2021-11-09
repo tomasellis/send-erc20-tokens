@@ -16,8 +16,9 @@ const Home: NextPage = () => {
       <main className="w-screen h-screen flex">
         <MainScreen />
         <ToastContainer
-          toastClassName="w-1/5"
-          className="absolute right-16 top-20"
+          bodyClassName="w-72 cursor-default"
+          toastClassName="border border-borderGrey absolute top-20"
+          className=""
           autoClose={false}
           newestOnTop
           closeOnClick={false}

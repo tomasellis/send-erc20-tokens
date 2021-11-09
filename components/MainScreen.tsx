@@ -307,10 +307,7 @@ const MainScreen = () => {
                       selectedToken={selectedToken}
                       network={network}
                       setUpdateTokensList={setUpdateTokensList}
-                    />,
-                    {
-                      position: "top-right",
-                    }
+                    />
                   );
                   if (tokenList !== undefined) {
                     const updatedTokensBalance = await updateTokensBalance(
@@ -352,6 +349,23 @@ const MainScreen = () => {
               }}
             >
               Send
+            </button>
+            <button
+              onClick={() => {
+                if (currentQueuedTx !== undefined) {
+                  toast(
+                    <TransactionPopup
+                      tx={currentQueuedTx}
+                      quantitySent={quantityToSend}
+                      selectedToken={selectedToken}
+                      network={network}
+                      setUpdateTokensList={setUpdateTokensList}
+                    />
+                  );
+                }
+              }}
+            >
+              TOAST
             </button>
           </div>
         </div>

@@ -1,10 +1,10 @@
-import { ethers } from "ethers";
+import { ethers, providers } from "ethers";
 
 export default async (
   receiverAddress: string,
   tokenAddress: string,
   quantitySent: string
-) => {
+): Promise<providers.TransactionResponse> => {
   // @ts-ignore
   const { ethereum } = window;
 
@@ -15,10 +15,6 @@ export default async (
   // Connect to the contract
   const contract = new ethers.Contract(tokenAddress, erc20AbiFragment, signer);
 
-  // Gas price
-  const gasPrice = await signer.getGasPrice();
-  console.log("GAS PRICE", gasPrice);
-
   // How many tokens?
   const numberOfDecimals = 18;
   const numberOfTokens = ethers.utils.parseUnits(
@@ -27,14 +23,11 @@ export default async (
   );
 
   // Send tokens
-  try {
-    const tx = await contract.transfer(receiverAddress, numberOfTokens);
-    console.log("Transaction incoming");
-    await tx.wait();
-    console.log("Transaction done!");
-  } catch (err) {
-    console.log("ERR TX", err);
-  }
+  const tx: providers.TransactionResponse = await contract.transfer(
+    receiverAddress,
+    numberOfTokens
+  );
+  return tx;
 };
 
 const erc20AbiFragment = [

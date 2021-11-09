@@ -5,6 +5,7 @@ const createTxDictionary = (
   let newDictionary: Dictionary<EtherscanTransactionResponse> = {};
   for (let i = 0; i < rawApiData.length; i++) {
     let apiTx = rawApiData[i];
+    console.log("APITX", apiTx);
     if (apiTx.from === userAddress) {
       apiTx.speedUp = false;
       newDictionary[apiTx.nonce] = apiTx;

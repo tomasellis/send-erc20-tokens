@@ -7,10 +7,10 @@ const etherscanApiToken = process.env.NEXT_PUBLIC_ETHERSCAN_API_TOKEN;
 
 const getAllUserTransactionsData = async (
   address: string,
-  network: "mainnet" | "rinkeby"
+  network: "Mainnet" | "Rinkeby"
 ): Promise<SpedUpResult> => {
   const txEndpoint = `${
-    network === "mainnet" ? etherscanBaseURL : etherscanRinkebyBaseURL
+    network === "Mainnet" ? etherscanBaseURL : etherscanRinkebyBaseURL
   }?module=account&action=txlist&address=${address}&startblock=9000000&endblock=99999999&offset=25&sort=desc&apikey=${etherscanApiToken}`;
 
   const res: { data: EtherscanResponse } = await axios.get(txEndpoint);

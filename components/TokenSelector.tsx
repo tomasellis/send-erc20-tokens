@@ -1,4 +1,4 @@
-import react, { Fragment, useEffect, useState } from "react";
+import React, { Fragment, useEffect, useState } from "react";
 import TextField from "@mui/material/TextField";
 import Autocomplete from "@mui/material/Autocomplete";
 import CircularProgress from "@mui/material/CircularProgress";
@@ -14,11 +14,13 @@ type MappedToken = {
 
 export default (props: {
   options: MappedToken[];
-  setSelectedToken: react.Dispatch<react.SetStateAction<MappedToken>>;
+  selectedToken: MappedToken;
+  setSelectedToken: React.Dispatch<React.SetStateAction<MappedToken>>;
+  tx: string;
 }) => {
   const [open, setOpen] = useState(false);
   const [options, setOptions] = useState<MappedToken[]>(props.options);
-  const [selectedToken, setSelectedToken] = useState<MappedToken>({
+  const [localTokenSelection, setLocalTokenSelection] = useState<MappedToken>({
     address: "",
     name: "",
     iconUrl: "",
@@ -26,18 +28,29 @@ export default (props: {
   });
 
   useEffect(() => {
+    props.setSelectedToken({
+      ...props.selectedToken,
+      balance: localTokenSelection.balance,
+      address: localTokenSelection.address,
+      name: localTokenSelection.name,
+      iconUrl: localTokenSelection.iconUrl,
+    });
+  }, [localTokenSelection]);
+
+  useEffect(() => {
     setOptions(props.options);
   }, [props.options]);
 
-  useEffect(() => {
-    console.log(selectedToken);
-    props.setSelectedToken(selectedToken);
-  }, [selectedToken]);
-
   return (
     <Autocomplete
+      key={props.tx}
       id="asyncAutocomplete"
-      sx={{ width: 300 }}
+      sx={{
+        width: 350,
+        height: 50,
+        backgroundColor: "#4D00B4",
+      }}
+      className="rounded-sm"
       disableClearable
       open={open}
       onOpen={() => {
@@ -50,14 +63,14 @@ export default (props: {
       getOptionLabel={(option) => option.name}
       options={options}
       limitTags={1}
-      onChange={(e, value) => setSelectedToken(value)}
+      onChange={(e, value) => setLocalTokenSelection(value)}
       renderOption={(props, option) => {
         return (
           <li {...props}>
             <Icon>
               <img src={option.iconUrl} width="20px"></img>
             </Icon>{" "}
-            {option.name} |&#160;
+            <b>{option.name}</b> &#160;|&#160;
             <span className="text-blue-500 text-sm justify-self-end">
               {option.balance}
             </span>
@@ -67,14 +80,19 @@ export default (props: {
       renderInput={(params) => (
         <TextField
           {...params}
-          label="Pick an ERC20 token to gift!"
+          placeholder="Search for a token..."
+          variant="outlined"
           InputProps={{
             ...params.InputProps,
+            sx: {
+              height: 50,
+            },
+            className: "text-accentPurple font-bold",
             startAdornment: (
               <Fragment>
-                {selectedToken !== null ? (
+                {props.selectedToken !== null ? (
                   <Icon className="flex justify-center items-center">
-                    <img src={selectedToken.iconUrl} width="20px"></img>
+                    <img src={props.selectedToken.iconUrl} width="20px"></img>
                   </Icon>
                 ) : (
                   ""
@@ -83,11 +101,11 @@ export default (props: {
             ),
             endAdornment: (
               <Fragment>
-                <span className="text-blue-500">{selectedToken.balance}</span>
-                {/* {loading ? (
-                  <CircularProgress color="inherit" size={20} />
-                ) : (
-                )} */}
+                <span className="text-accentPurple font-bold text-sm min-w-max">
+                  {props.selectedToken.address !== ""
+                    ? `Balance: ${props.selectedToken.balance}`
+                    : ""}
+                </span>
                 {params.InputProps.endAdornment}
               </Fragment>
             ),

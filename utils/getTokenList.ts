@@ -1,8 +1,10 @@
 import axios, { AxiosResponse } from "axios";
 
-const getTokenList = async (network: "mainnet" | "rinkeby"): Promise<MappedToken[]> => {
+const getTokenList = async (
+  network: "Mainnet" | "Rinkeby"
+): Promise<MappedToken[]> => {
   try {
-    if(network === "mainnet"){
+    if (network === "Mainnet") {
       const { data }: AxiosResponse<TokenData> = await axios({
         url: graphUrl,
         method: "POST",
@@ -10,9 +12,9 @@ const getTokenList = async (network: "mainnet" | "rinkeby"): Promise<MappedToken
           query: tokensQuery,
         },
       });
-  
+
       const registries = data.data.registries;
-  
+
       const mappedTokens = registries[0].tokens.map((token) => {
         let mappedToken: MappedToken = {
           address: token.address,
@@ -23,31 +25,30 @@ const getTokenList = async (network: "mainnet" | "rinkeby"): Promise<MappedToken
         return mappedToken;
       });
 
-      return mappedTokens
-
+      return mappedTokens;
     } else {
-
-      let mappedTokens: MappedToken[] = []
+      let mappedTokens: MappedToken[] = [];
 
       let tk: MappedToken = {
         address: "0x5592EC0cfb4dbc12D3aB100b257153436a1f0FEa",
         balance: 0,
-        iconUrl: "",
+        iconUrl:
+          "https://s2.coinmarketcap.com/static/img/coins/200x200/2308.png",
         name: "DAIDev",
       };
-  
+
       mappedTokens.push(tk);
-  
+
       tk = {
         address: "0x01BE23585060835E02B77ef475b0Cc51aA1e0709",
         balance: 0,
         iconUrl: "",
         name: "LINKDev",
       };
-  
+
       mappedTokens.push(tk);
-  
-      return mappedTokens
+
+      return mappedTokens;
       // TO FIX: remove test tokens -----------------------------------------
     }
   } catch (err) {

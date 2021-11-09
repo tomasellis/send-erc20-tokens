@@ -1,10 +1,8 @@
 import type { NextPage } from "next";
 import Head from "next/head";
-import Image from "next/image";
-import { useState } from "react";
 import MainScreen from "../components/MainScreen";
-import Transaction from "../components/Transactions";
-import TokenSelector from "../components/TokenSelector";
+import { ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 const Home: NextPage = () => {
   return (
@@ -17,6 +15,15 @@ const Home: NextPage = () => {
 
       <main className="w-screen h-screen flex">
         <MainScreen />
+        <ToastContainer
+          toastClassName="w-1/5"
+          className="absolute right-16 top-20"
+          autoClose={false}
+          newestOnTop
+          closeOnClick={false}
+          rtl={false}
+          draggable
+        />
       </main>
     </div>
   );

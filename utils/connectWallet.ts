@@ -1,6 +1,6 @@
 type ConnectWalletResponse = "NOMETAMASK" | "ERROR" | string;
 
-const connectWallet = (): ConnectWalletResponse => {
+const connectWallet = async (): Promise<ConnectWalletResponse> => {
   try {
     // @ts-ignore
     const { ethereum } = window;
@@ -10,7 +10,7 @@ const connectWallet = (): ConnectWalletResponse => {
       return "NOMETAMASK";
     }
 
-    const accounts = ethereum.request({
+    const accounts = await ethereum.request({
       method: "eth_requestAccounts",
     });
 

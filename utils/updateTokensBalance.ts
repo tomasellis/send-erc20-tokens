@@ -38,10 +38,7 @@ export default async (
     });
 
     // TO FIX: balance log
-    console.log(
-      "LINK BALANCE",
-      tokenListWithBalances[tokenListWithBalances.length - 1]
-    );
+    console.log("BALANCEs", tokenListWithBalances);
 
     return tokenListWithBalances;
   } catch (err) {

@@ -26,6 +26,7 @@ const TransactionPopup = ({
   quantitySent: string;
   network: "Rinkeby" | "Mainnet";
 }) => {
+  console.log("TXSSSS", tx);
   const etherscanApiToken = process.env.NEXT_PUBLIC_ETHERSCAN_API_TOKEN;
   const baseEtherscanUrl =
     network === "Mainnet"
@@ -46,6 +47,7 @@ const TransactionPopup = ({
       const { data } = await axios.get(timeEstimationUrl);
       const seconds = data.result;
       setTime(seconds);
+      console.log("WAIT =>>>>>>>>>>>", tx.wait.toString());
       await tx
         .wait()
         .then((value: any) => {

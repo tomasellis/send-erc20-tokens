@@ -12,6 +12,8 @@ import { GlobeIcon } from "@heroicons/react/solid";
 import getTransferTokenTx from "../utils/getTransferTokenTx";
 import TransactionPopup from "./TransactionPopup";
 import { toast, ToastContainer } from "react-toastify";
+import checkForPastTransactions from "../utils/checkForPastTransactions";
+import { isBigNumberish } from "@ethersproject/bignumber/lib/bignumber";
 
 type MappedToken = {
   address: string;
@@ -107,7 +109,7 @@ const MainScreen = () => {
     }
   }, [network]);
 
-  // Load page, load tokens
+  // Load page, load tokens, load past transactions
   useEffect(() => {
     (async () => {
       const tokenList = await getTokenList(network);
@@ -123,6 +125,54 @@ const MainScreen = () => {
   useEffect(() => {
     if (userAddress !== "" && tokenList !== undefined) {
       (async () => {
+        const pastTxs = checkForPastTransactions(userAddress);
+        console.log("PASTTXSEFFECT", pastTxs);
+        if (pastTxs !== "") {
+          for (let key in pastTxs) {
+            const currentTx = pastTxs[key];
+            const properParsedTx: providers.TransactionResponse = {
+              ...currentTx,
+              accessList: currentTx.accessList,
+              blockHash: currentTx.blockHash,
+              blockNumber: currentTx.blockNumber,
+              chainId: currentTx.chainId,
+              confirmations: currentTx.confirmations,
+              data: currentTx.data,
+              from: currentTx.from,
+              gasLimit: BigNumber.from(currentTx.gasLimit),
+              gasPrice: BigNumber.from(currentTx.gasPrice),
+              hash: currentTx.hash,
+              maxFeePerGas: BigNumber.from(currentTx.maxFeePerGas),
+              maxPriorityFeePerGas: BigNumber.from(
+                currentTx.maxPriorityFeePerGas
+              ),
+              nonce: currentTx.nonce,
+              r: currentTx.r,
+              s: currentTx.s,
+              to: currentTx.to,
+              type: currentTx.type,
+              v: currentTx.v,
+              value: BigNumber.from(currentTx.value),
+            };
+            toast(
+              <TransactionPopup
+                tx={properParsedTx}
+                quantitySent={quantityToSend}
+                selectedToken={selectedToken}
+                network={network}
+                setUpdateTokensList={setUpdateTokensList}
+              />,
+              {
+                onClose: () => {
+                  const pastTxs = checkForPastTransactions(userAddress);
+                  if (pastTxs !== "") {
+                    alert(`Borra ${pastTxs[key].nonce} y ${pastTxs[key].hash}`);
+                  }
+                },
+              }
+            );
+          }
+        }
         // Update transactions list whenever the user changes address
         const transactionsData = await getAllUserTransactionsData(
           userAddress,
@@ -299,6 +349,7 @@ const MainScreen = () => {
                     selectedToken.address,
                     quantityToSend
                   );
+                  console.log("INCOMINGTX ========>", tx);
                   setCurrentQueuedTx(tx);
                   toast(
                     <TransactionPopup
@@ -309,6 +360,16 @@ const MainScreen = () => {
                       setUpdateTokensList={setUpdateTokensList}
                     />
                   );
+                  // Save txs till user deletes them
+                  const pastTxs = checkForPastTransactions(userAddress);
+                  if (pastTxs !== "") {
+                    pastTxs[tx.hash] = tx;
+                    console.log("SAVING", pastTxs[tx.hash]);
+                    localStorage.setItem(
+                      `pastTxFrom${userAddress}`,
+                      JSON.stringify(tx)
+                    );
+                  }
                   if (tokenList !== undefined) {
                     const updatedTokensBalance = await updateTokensBalance(
                       userAddress,

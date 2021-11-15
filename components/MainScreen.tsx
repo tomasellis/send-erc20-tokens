@@ -68,15 +68,14 @@ const MainScreen = () => {
     status: "Same",
     txs: {},
   });
-  const [currentQueuedTx, setCurrentQueuedTx] =
-    useState<ethers.providers.TransactionResponse>();
+
   const [updateTokensList, setUpdateTokensList] = useState<boolean>(false);
 
   let provider = new ethers.providers.JsonRpcProvider(
     "https://rinkeby.infura.io/v3/927415a05250482eaee7eda6db84bd5e"
   );
 
-  // Update tokens
+  // Update tokens balance with user data
   useEffect(() => {
     if (updateTokensList === true) {
       (async () => {
@@ -86,7 +85,6 @@ const MainScreen = () => {
             tokenList,
             provider
           );
-          // Reset inputs
           setTokenList(updatedTokensBalance);
           setUpdateTokensList(false);
           console.log("UPDATED TOKENS BALANCE");
@@ -109,11 +107,12 @@ const MainScreen = () => {
     }
   }, [network]);
 
-  // Load page, load tokens, load past transactions
+  // Load page, load tokens
   useEffect(() => {
     (async () => {
       const tokenList = await getTokenList(network);
       setTokenList(tokenList);
+      // Check if user has connected before
       const account = await checkIfWalletIsConnected();
       if (account !== "") {
         setUserAddress(account);
@@ -125,54 +124,6 @@ const MainScreen = () => {
   useEffect(() => {
     if (userAddress !== "" && tokenList !== undefined) {
       (async () => {
-        const pastTxs = checkForPastTransactions(userAddress);
-        console.log("PASTTXSEFFECT", pastTxs);
-        if (pastTxs !== "") {
-          for (let key in pastTxs) {
-            const currentTx = pastTxs[key];
-            const properParsedTx: providers.TransactionResponse = {
-              ...currentTx,
-              accessList: currentTx.accessList,
-              blockHash: currentTx.blockHash,
-              blockNumber: currentTx.blockNumber,
-              chainId: currentTx.chainId,
-              confirmations: currentTx.confirmations,
-              data: currentTx.data,
-              from: currentTx.from,
-              gasLimit: BigNumber.from(currentTx.gasLimit),
-              gasPrice: BigNumber.from(currentTx.gasPrice),
-              hash: currentTx.hash,
-              maxFeePerGas: BigNumber.from(currentTx.maxFeePerGas),
-              maxPriorityFeePerGas: BigNumber.from(
-                currentTx.maxPriorityFeePerGas
-              ),
-              nonce: currentTx.nonce,
-              r: currentTx.r,
-              s: currentTx.s,
-              to: currentTx.to,
-              type: currentTx.type,
-              v: currentTx.v,
-              value: BigNumber.from(currentTx.value),
-            };
-            toast(
-              <TransactionPopup
-                tx={properParsedTx}
-                quantitySent={quantityToSend}
-                selectedToken={selectedToken}
-                network={network}
-                setUpdateTokensList={setUpdateTokensList}
-              />,
-              {
-                onClose: () => {
-                  const pastTxs = checkForPastTransactions(userAddress);
-                  if (pastTxs !== "") {
-                    alert(`Borra ${pastTxs[key].nonce} y ${pastTxs[key].hash}`);
-                  }
-                },
-              }
-            );
-          }
-        }
         // Update transactions list whenever the user changes address
         const transactionsData = await getAllUserTransactionsData(
           userAddress,
@@ -184,12 +135,12 @@ const MainScreen = () => {
           status: transactionsData.status,
         });
 
+        // Same with tokens balance
         const updatedTokensBalance = await updateTokensBalance(
           userAddress,
           tokenList,
           provider
         );
-        console.log(updatedTokensBalance);
         setTokenList(updatedTokensBalance);
       })();
     }
@@ -284,18 +235,6 @@ const MainScreen = () => {
             }}
           />
           <span className="text-lg pt-3 text-textGrey">Select a token</span>
-          <div className="pt-2">
-            {tokenList !== undefined ? (
-              <TokenSelector
-                tx={currentQueuedTx ? currentQueuedTx.hash : ""}
-                selectedToken={selectedToken}
-                options={tokenList}
-                setSelectedToken={setSelectedToken}
-              />
-            ) : (
-              <CircularProgress color="inherit" size={30} />
-            )}
-          </div>
           <span className="text-lg pt-3 text-textGrey">How much to send?</span>
           <div className="flex flex-col">
             <input
@@ -349,8 +288,6 @@ const MainScreen = () => {
                     selectedToken.address,
                     quantityToSend
                   );
-                  console.log("INCOMINGTX ========>", tx);
-                  setCurrentQueuedTx(tx);
                   toast(
                     <TransactionPopup
                       tx={tx}
@@ -360,16 +297,7 @@ const MainScreen = () => {
                       setUpdateTokensList={setUpdateTokensList}
                     />
                   );
-                  // Save txs till user deletes them
-                  const pastTxs = checkForPastTransactions(userAddress);
-                  if (pastTxs !== "") {
-                    pastTxs[tx.hash] = tx;
-                    console.log("SAVING", pastTxs[tx.hash]);
-                    localStorage.setItem(
-                      `pastTxFrom${userAddress}`,
-                      JSON.stringify(tx)
-                    );
-                  }
+
                   if (tokenList !== undefined) {
                     const updatedTokensBalance = await updateTokensBalance(
                       userAddress,
@@ -411,23 +339,6 @@ const MainScreen = () => {
             >
               Send
             </button>
-            <button
-              onClick={() => {
-                if (currentQueuedTx !== undefined) {
-                  toast(
-                    <TransactionPopup
-                      tx={currentQueuedTx}
-                      quantitySent={quantityToSend}
-                      selectedToken={selectedToken}
-                      network={network}
-                      setUpdateTokensList={setUpdateTokensList}
-                    />
-                  );
-                }
-              }}
-            >
-              TOAST
-            </button>
           </div>
         </div>
       </div>
@@ -449,30 +360,4 @@ type TxTransactionReplaced = {
   cancelled: boolean;
   replacement: providers.TransactionResponse;
   receipt: providers.TransactionReceipt;
-};
-
-// DEV FIX
-
-const testTx = {
-  blockHash:
-    "0xd07a3debed70cdec4466b515cb47d457357d15054d6b7707c05a6a2c5d56b948",
-  blockNumber: "9380309",
-  confirmations: "227523",
-  contractAddress: "0x23acd5d5ad2d9e714f2aab5f52daea5e5381c28b",
-  cumulativeGasUsed: "2767880",
-  from: "0x1d36e187203c4187adeb595c8a4219c4d2d66826",
-  gas: "474808",
-  gasPrice: "1000000010",
-  gasUsed: "474808",
-  hash: "0x30096f6dc492b404a53f2ac16adddd11218fac4d574dd214ca70a3d44757ffb5",
-  input:
-    "0x608060405234801561001057600080fd5b506100596040518060400160405280600981526020017f426565672077617665000000000000000000000000000000000000000000000081525061005e60201b6102971760201c565b6101e1565b6100fa81604051602401610072919061015f565b6040516020818303038152906040527f41304fac000000000000000000000000000000000000000000000000000000007bffffffffffffffffffffffffffffffffffffffffffffffffffffffff19166020820180517bffffffffffffffffffffffffffffffffffffffffffffffffffffffff83818316178352505050506100fd60201b60201c565b50565b60008151905060006a636f6e736f6c652e6c6f679050602083016000808483855afa5050505050565b600061013182610181565b61013b818561018c565b935061014b81856020860161019d565b610154816101d0565b840191505092915050565b600060208201905081810360008301526101798184610126565b905092915050565b600081519050919050565b600082825260208201905092915050565b60005b838110156101bb5780820151818401526020810190506101a0565b838111156101ca576000848401525b50505050565b6000601f19601f8301169050919050565b61077d806101f06000396000f3fe608060405234801561001057600080fd5b50600436106100365760003560e01c80636fe15b441461003b5780639a2cdc0814610045575b600080fd5b610043610063565b005b61004d61024c565b60405161005a919061056a565b60405180910390f35b600160008082825461007591906105a1565b925050819055506001339080600181540180825580915050600190039060005260206000200160009091909190916101000a81548173ffffffffffffffffffffffffffffffffffffffff021916908373ffffffffffffffffffffffffffffffffffffffff16021790555060005b600180549050811015610249576001808054905061010091906105f7565b8114156101925761018d604051806060016040528060248152602001610724602491396001838154811061015d577f4e487b7100000000000000000000000000000000000000000000000000000000600052603260045260246000fd5b9060005260206000200160009054906101000a900473ffffffffffffffffffffffffffffffffffffffff16610330565b610236565b6102356040518060400160405280600781526020017f537570272025730000000000000000000000000000000000000000000000000081525060018381548110610205577f4e487b7100000000000000000000000000000000000000000000000000000000600052603260045260246000fd5b9060005260206000200160009054906101000a900473ffffffffffffffffffffffffffffffffffffffff16610330565b5b80806102419061069a565b9150506100e2565b50565b600061028f6040518060400160405280601781526020017f5765206861766520256420746f74616c207761766573210000000000000000008152506000546103cc565b600054905090565b61032d816040516024016102ab91906104e8565b6040516020818303038152906040527f41304fac000000000000000000000000000000000000000000000000000000007bffffffffffffffffffffffffffffffffffffffffffffffffffffffff19166020820180517bffffffffffffffffffffffffffffffffffffffffffffffffffffffff8381831617835250505050610468565b50565b6103c8828260405160240161034692919061050a565b6040516020818303038152906040527f319af333000000000000000000000000000000000000000000000000000000007bffffffffffffffffffffffffffffffffffffffffffffffffffffffff19166020820180517bffffffffffffffffffffffffffffffffffffffffffffffffffffffff8381831617835250505050610468565b5050565b61046482826040516024016103e292919061053a565b6040516020818303038152906040527f9710a9d0000000000000000000000000000000000000000000000000000000007bffffffffffffffffffffffffffffffffffffffffffffffffffffffff19166020820180517bffffffffffffffffffffffffffffffffffffffffffffffffffffffff8381831617835250505050610468565b5050565b60008151905060006a636f6e736f6c652e6c6f679050602083016000808483855afa5050505050565b61049a8161062b565b82525050565b60006104ab82610585565b6104b58185610590565b93506104c5818560208601610667565b6104ce81610712565b840191505092915050565b6104e28161065d565b82525050565b6000602082019050818103600083015261050281846104a0565b905092915050565b6000604082019050818103600083015261052481856104a0565b90506105336020830184610491565b9392505050565b6000604082019050818103600083015261055481856104a0565b905061056360208301846104d9565b9392505050565b600060208201905061057f60008301846104d9565b92915050565b600081519050919050565b600082825260208201905092915050565b60006105ac8261065d565b91506105b78361065d565b9250827fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff038211156105ec576105eb6106e3565b5b828201905092915050565b60006106028261065d565b915061060d8361065d565b9250828210156106205761061f6106e3565b5b828203905092915050565b60006106368261063d565b9050919050565b600073ffffffffffffffffffffffffffffffffffffffff82169050919050565b6000819050919050565b60005b8381101561068557808201518184015260208101905061066a565b83811115610694576000848401525b50505050565b60006106a58261065d565b91507fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff8214156106d8576106d76106e3565b5b600182019050919050565b7f4e487b7100000000000000000000000000000000000000000000000000000000600052601160045260246000fd5b6000601f19601f830116905091905056fe57656c636f6d6520746f2074686520636f6f6c2070656f706c6520636c75622c20257321a26469706673582212204a04c54c840ac650ae35dab913ec463c1615c42cbb3df44de89388360cda064464736f6c63430008000033",
-  isError: "0",
-  nonce: "0",
-  speedUp: false,
-  timeStamp: "1632961816",
-  to: "0x1d36e187203c4187adeb54789a4219c4d2d66826",
-  transactionIndex: "17",
-  txreceipt_status: "1",
-  value: "0",
 };

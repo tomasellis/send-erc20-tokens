@@ -9,15 +9,12 @@ import { Box } from "@mui/system";
 import { toast } from "react-toastify";
 import { Transaction } from "ethers";
 
-const TransactionPopup = ({
+const PastTransactionPopup = ({
   tx,
   selectedToken,
   quantitySent,
   network,
-  closeToast,
-  setUpdateTokensList,
 }: {
-  setUpdateTokensList: React.Dispatch<react.SetStateAction<boolean>>;
   tx: providers.TransactionResponse;
   closeToast?: any;
   toastProps?: ToastProps;
@@ -25,7 +22,6 @@ const TransactionPopup = ({
   quantitySent: string;
   network: "Rinkeby" | "Mainnet";
 }) => {
-  console.log("TXSSSS", tx);
   const etherscanApiToken = process.env.NEXT_PUBLIC_ETHERSCAN_API_TOKEN;
   const baseEtherscanUrl =
     network === "Mainnet"
@@ -98,46 +94,6 @@ const TransactionPopup = ({
         //     }
         //   }
         // });
-      } else {
-        await tx
-          .wait()
-          .then((value: any) => {
-            console.log("TX VALUE DONE?", value);
-            setStatus("Success");
-            setUpdateTokensList(true);
-          })
-          .catch((err) => {
-            if (err["transaction"] !== undefined) {
-              const errTyped = err as TxCallException;
-              console.log(
-                "EXCEPTION",
-                errTyped.receipt,
-                errTyped.transaction,
-                errTyped.transactionHash
-              );
-            } else {
-              const errTyped = err as TxTransactionReplaced;
-              console.log(
-                "REPLACED",
-                errTyped.cancelled,
-                errTyped.reason,
-                errTyped.replacement,
-                errTyped.receipt
-              );
-              if (errTyped.reason === "repriced") {
-                setStatus("Speed");
-                toast(
-                  <TransactionPopup
-                    tx={errTyped.replacement}
-                    quantitySent={quantitySent}
-                    selectedToken={selectedToken}
-                    network={network}
-                    setUpdateTokensList={setUpdateTokensList}
-                  />
-                );
-              }
-            }
-          });
       }
     })();
   }, []);
@@ -259,7 +215,7 @@ const TransactionPopup = ({
   );
 };
 
-export default TransactionPopup;
+export default PastTransactionPopup;
 
 type MappedToken = {
   address: string;

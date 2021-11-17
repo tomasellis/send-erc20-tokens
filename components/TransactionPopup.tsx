@@ -9,33 +9,16 @@ import { Box } from "@mui/system";
 import { toast } from "react-toastify";
 import { Transaction } from "ethers";
 
-const TransactionPopup = ({
-  tx,
-  selectedToken,
-  quantitySent,
-  network,
-  closeToast,
-  setUpdateTokensList,
-}: {
-  setUpdateTokensList: React.Dispatch<react.SetStateAction<boolean>>;
-  tx: providers.TransactionResponse;
-  closeToast?: any;
-  toastProps?: ToastProps;
-  selectedToken: MappedToken;
-  quantitySent: string;
-  network: "Rinkeby" | "Mainnet";
-}) => {
-  console.log("TXSSSS", tx);
+const TransactionPopup = ({ tx }: { tx: LocalTx }) => {
   const etherscanApiToken = process.env.NEXT_PUBLIC_ETHERSCAN_API_TOKEN;
+
   const baseEtherscanUrl =
-    network === "Mainnet"
-      ? `https://etherscan.io`
-      : `https://rinkeby.etherscan.io`;
-  const etherscanUrl = `${baseEtherscanUrl}/tx/${tx.hash}`;
-  const timeEstimationUrl = `https://api.etherscan.io/api?module=gastracker&action=gasestimate&gasprice=${
-    tx !== undefined && tx.gasPrice !== undefined
-      ? tx.gasLimit.toNumber() * tx.gasPrice.toNumber()
-      : ""
+    tx.network === "Mainnet" ? `etherscan.io` : `rinkeby.etherscan.io`;
+
+  const etherscanUrl = `https://${baseEtherscanUrl}/tx/${tx.hash}`;
+
+  const timeEstimationUrl = `https://api.${baseEtherscanUrl}/api?module=gastracker&action=gasestimate&gasprice=${
+    tx.gasLimit.toNumber() * tx.gasPrice.toNumber()
   }&apikey=${etherscanApiToken}`;
 
   const [status, setStatus] = useState<TxStatus>("Mining");
@@ -59,45 +42,6 @@ const TransactionPopup = ({
         } catch (err) {
           console.error("TRY TXRESULT", err);
         }
-        // await tx
-        // .wait()
-        // .then((value: any) => {
-        //   console.log("TX VALUE DONE?", value);
-        //   setStatus("Success");
-        //   setUpdateTokensList(true);
-        // })
-        // .catch((err) => {
-        //   if (err["transaction"] !== undefined) {
-        //     const errTyped = err as TxCallException;
-        //     console.log(
-        //       "EXCEPTION",
-        //       errTyped.receipt,
-        //       errTyped.transaction,
-        //       errTyped.transactionHash
-        //     );
-        //   } else {
-        //     const errTyped = err as TxTransactionReplaced;
-        //     console.log(
-        //       "REPLACED",
-        //       errTyped.cancelled,
-        //       errTyped.reason,
-        //       errTyped.replacement,
-        //       errTyped.receipt
-        //     );
-        //     if (errTyped.reason === "repriced") {
-        //       setStatus("Speed");
-        //       toast(
-        //         <TransactionPopup
-        //           tx={errTyped.replacement}
-        //           quantitySent={quantitySent}
-        //           selectedToken={selectedToken}
-        //           network={network}
-        //           setUpdateTokensList={setUpdateTokensList}
-        //         />
-        //       );
-        //     }
-        //   }
-        // });
       } else {
         await tx
           .wait()
@@ -260,6 +204,17 @@ const TransactionPopup = ({
 };
 
 export default TransactionPopup;
+
+type LocalTx = {
+  hash: string;
+  nonce: number;
+  tokenQuantity: number;
+  token: MappedToken;
+  changedQuantity: number;
+  gasPrice: number;
+  gasLimit: number;
+  network: "Mainnet" | "Rinkeby";
+};
 
 type MappedToken = {
   address: string;

@@ -1,13 +1,11 @@
-import { ethers, providers } from "ethers";
 import react, { useEffect, useState } from "react";
-import { ToastProps } from "react-toastify/dist/types";
 import { ExternalLinkIcon } from "@heroicons/react/solid";
 import { Icon } from "@mui/material";
 import axios from "axios";
 import LinearProgress from "@mui/material/LinearProgress";
 import { Box } from "@mui/system";
-import { toast } from "react-toastify";
 import { Transaction } from "ethers";
+import { LocalTx, TxStatus } from "../utils/types";
 
 const TransactionPopup = ({ tx }: { tx: LocalTx }) => {
   const etherscanApiToken = process.env.NEXT_PUBLIC_ETHERSCAN_API_TOKEN;
@@ -18,10 +16,10 @@ const TransactionPopup = ({ tx }: { tx: LocalTx }) => {
   const etherscanUrl = `https://${baseEtherscanUrl}/tx/${tx.hash}`;
 
   const timeEstimationUrl = `https://api.${baseEtherscanUrl}/api?module=gastracker&action=gasestimate&gasprice=${
-    tx.gasLimit.toNumber() * tx.gasPrice.toNumber()
+    tx.gasLimit * tx.gasPrice
   }&apikey=${etherscanApiToken}`;
 
-  const [status, setStatus] = useState<TxStatus>("Mining");
+  const [status, setStatus] = useState<TxStatus>(tx.status);
   const [time, setTime] = useState<string>("");
 
   useEffect(() => {
@@ -29,75 +27,17 @@ const TransactionPopup = ({ tx }: { tx: LocalTx }) => {
       const { data } = await axios.get(timeEstimationUrl);
       const seconds = data.result;
       setTime(seconds);
-      if (tx.wait === undefined) {
-        // @ts-ignore
-        const { ethereum } = window;
-
-        // Get wallet
-        const provider = new ethers.providers.Web3Provider(ethereum);
-
-        try {
-          const txResult = await provider.waitForTransaction(tx.hash);
-          console.log("PROPER TXRESULT", txResult);
-        } catch (err) {
-          console.error("TRY TXRESULT", err);
-        }
-      } else {
-        await tx
-          .wait()
-          .then((value: any) => {
-            console.log("TX VALUE DONE?", value);
-            setStatus("Success");
-            setUpdateTokensList(true);
-          })
-          .catch((err) => {
-            if (err["transaction"] !== undefined) {
-              const errTyped = err as TxCallException;
-              console.log(
-                "EXCEPTION",
-                errTyped.receipt,
-                errTyped.transaction,
-                errTyped.transactionHash
-              );
-            } else {
-              const errTyped = err as TxTransactionReplaced;
-              console.log(
-                "REPLACED",
-                errTyped.cancelled,
-                errTyped.reason,
-                errTyped.replacement,
-                errTyped.receipt
-              );
-              if (errTyped.reason === "repriced") {
-                setStatus("Speed");
-                toast(
-                  <TransactionPopup
-                    tx={errTyped.replacement}
-                    quantitySent={quantitySent}
-                    selectedToken={selectedToken}
-                    network={network}
-                    setUpdateTokensList={setUpdateTokensList}
-                  />
-                );
-              }
-            }
-          });
-      }
     })();
   }, []);
 
   const setTitle = (status: TxStatus): string => {
     switch (status) {
-      case "Mining":
-        return "In progress";
       case "Success":
         return "Finished";
       case "Error":
         return "Error";
-      case "Cancelled":
-        return "Cancelled";
-      case "Speed":
-        return "Speed up";
+      case "Pending":
+        return "Pending";
       default:
         return "";
     }
@@ -105,15 +45,11 @@ const TransactionPopup = ({ tx }: { tx: LocalTx }) => {
 
   const setEta = (status: TxStatus): string => {
     switch (status) {
-      case "Mining":
+      case "Pending":
         return `${time}s`;
       case "Success":
         return "Done!";
       case "Error":
-        return "None";
-      case "Cancelled":
-        return "None";
-      case "Speed":
         return "None";
       default:
         return "";
@@ -122,16 +58,12 @@ const TransactionPopup = ({ tx }: { tx: LocalTx }) => {
 
   const setStatusColor = (status: TxStatus): string => {
     switch (status) {
-      case "Mining":
+      case "Pending":
         return `#D14EFF`;
       case "Success":
         return "#00C42B";
       case "Error":
         return "#F60C36";
-      case "Cancelled":
-        return "#F60C36";
-      case "Speed":
-        return "#009AFF";
       default:
         return "FAFAFA";
     }
@@ -150,18 +82,18 @@ const TransactionPopup = ({ tx }: { tx: LocalTx }) => {
       />
       <span className="text-sm pt-3 text-textGrey flex-1 flex hover:underline hover:text-lightBlue">
         <a href={etherscanUrl} target={"_blank"} className="flex-1 flex">
-          {status === "Mining"
+          {status === "Pending"
             ? "Sending"
             : status === "Success"
             ? "Sent"
             : "Sending"}{" "}
-          &#160;<b>{quantitySent}</b>&#160;
+          &#160;<b>{tx.tokenQuantity}</b>&#160;
           <Icon>
-            <img src={selectedToken.iconUrl} width="20px"></img>
+            <img src={tx.token.iconUrl} width="20px"></img>
           </Icon>
-          <b>{selectedToken.name}</b>&#160;to&#160;
+          <b>{tx.token.name}</b>&#160;to&#160;
           <b>
-            {tx?.to?.slice(0, 5)}...
+            {tx.to?.slice(0, 5)}...
             {tx?.to?.slice(tx?.to?.length - 5, tx?.to?.length - 1)}
           </b>
           <ExternalLinkIcon
@@ -190,7 +122,7 @@ const TransactionPopup = ({ tx }: { tx: LocalTx }) => {
           </div>
         </div>
       </div>
-      {status === "Mining" ? (
+      {status === "Pending" ? (
         <Box sx={{ width: "100%" }}>
           <LinearProgress />
         </Box>
@@ -204,37 +136,3 @@ const TransactionPopup = ({ tx }: { tx: LocalTx }) => {
 };
 
 export default TransactionPopup;
-
-type LocalTx = {
-  hash: string;
-  nonce: number;
-  tokenQuantity: number;
-  token: MappedToken;
-  changedQuantity: number;
-  gasPrice: number;
-  gasLimit: number;
-  network: "Mainnet" | "Rinkeby";
-};
-
-type MappedToken = {
-  address: string;
-  name: string;
-  iconUrl: string;
-  balance: number;
-};
-
-type TxCallException = {
-  transaction: Transaction;
-  transactionHash: string;
-  receipt: providers.TransactionResponse;
-};
-
-type TxTransactionReplaced = {
-  hash: string;
-  reason: string;
-  cancelled: boolean;
-  replacement: providers.TransactionResponse;
-  receipt: providers.TransactionReceipt;
-};
-
-type TxStatus = "Mining" | "Success" | "Error" | "Cancelled" | "Speed";

@@ -1,10 +1,12 @@
 import { ethers, providers } from "ethers";
+import { LocalTx, MappedToken } from "./types";
 
 export default async (
   receiverAddress: string,
-  tokenAddress: string,
+  network: "Mainnet" | "Rinkeby",
+  token: MappedToken,
   quantitySent: string
-): Promise<providers.TransactionResponse> => {
+): Promise<LocalTx> => {
   // @ts-ignore
   const { ethereum } = window;
 
@@ -13,7 +15,7 @@ export default async (
   const signer = provider.getSigner();
 
   // Connect to the contract
-  const contract = new ethers.Contract(tokenAddress, erc20AbiFragment, signer);
+  const contract = new ethers.Contract(token.address, erc20AbiFragment, signer);
 
   // How many tokens?
   const numberOfDecimals = 18;
@@ -23,11 +25,42 @@ export default async (
   );
 
   // Send tokens
-  const tx: providers.TransactionResponse = await contract.transfer(
-    receiverAddress,
-    numberOfTokens
-  );
-  return tx;
+  try {
+    const tx: providers.TransactionResponse = await contract.transfer(
+      receiverAddress,
+      numberOfTokens
+    );
+
+    const localTx: LocalTx = {
+      changedQuantity: 0,
+      closedToast: false,
+      gasLimit: tx.gasLimit.toNumber(),
+      gasPrice: tx.gasPrice?.toNumber() ?? 0,
+      hash: tx.hash,
+      network: network,
+      nonce: tx.nonce,
+      status: "Pending",
+      to: tx.to ?? "",
+      token: token,
+      tokenQuantity: parseFloat(quantitySent),
+    };
+    return localTx;
+  } catch (err) {
+    console.log("getTransferTokenTxERROR", err);
+    return {
+      changedQuantity: 0,
+      closedToast: false,
+      gasLimit: 0,
+      gasPrice: 0,
+      hash: "ERROR",
+      network: network,
+      nonce: 0,
+      status: "Pending",
+      to: "",
+      token: token,
+      tokenQuantity: 0,
+    };
+  }
 };
 
 const erc20AbiFragment = [

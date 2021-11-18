@@ -1,55 +1,21 @@
 import react, { useEffect, useState } from "react";
-import { BigNumber, ethers, providers, Transaction } from "ethers";
+import { ethers, providers, Transaction } from "ethers";
 import connectWallet from "../utils/connectWallet";
 import getTokenList from "../utils/getTokenList";
-import TokenSelector from "./TokenSelector";
-import { CircularProgress } from "@mui/material";
 import updateTokensBalance from "../utils/updateTokensBalance";
 import getAllUserTransactionsData from "../utils/getAllUserTransactionsData";
-import { useInterval } from "../utils/useInterval";
 import checkIfWalletIsConnected from "../utils/checkIfWalletIsConnected";
 import { GlobeIcon } from "@heroicons/react/solid";
 import getTransferTokenTx from "../utils/getTransferTokenTx";
 import TransactionPopup from "./TransactionPopup";
-import { toast, ToastContainer } from "react-toastify";
-import checkForPastTransactions from "../utils/checkForPastTransactions";
-import { isBigNumberish } from "@ethersproject/bignumber/lib/bignumber";
+import { toast } from "react-toastify";
+import { EtherscanTransactionResponse } from "../utils/types";
 
 type MappedToken = {
   address: string;
   name: string;
   iconUrl: string;
   balance: number;
-};
-
-type EtherscanTransactionResponse = {
-  blockNumber: string;
-  timestamp: string;
-  hash: string;
-  nonce: string;
-  blockHash: string;
-  transactionIndex: string;
-  from: string;
-  to: string;
-  value: string;
-  gas: string;
-  gasPrice: string;
-  isError: string;
-  txreceipt_status: string;
-  input: string;
-  contractAddress: string;
-  cumulativeGasUsed: string;
-  gasUsed: string;
-  confirmations: string;
-};
-
-type SpedUpResult = {
-  status: "Diff" | "Same";
-  txs: Dictionary<EtherscanTransactionResponse>;
-};
-
-type Dictionary<T> = {
-  [Key: string]: T;
 };
 
 const MainScreen = () => {
@@ -64,15 +30,11 @@ const MainScreen = () => {
   });
   const [quantityToSend, setQuantityToSend] = useState<string>("");
   const [receiverAddress, setReceiverAddress] = useState<string>("");
-  const [transactions, setTransactions] = useState<SpedUpResult>({
-    status: "Same",
-    txs: {},
-  });
-
   const [updateTokensList, setUpdateTokensList] = useState<boolean>(false);
-
-  let provider = new ethers.providers.JsonRpcProvider(
-    "https://rinkeby.infura.io/v3/927415a05250482eaee7eda6db84bd5e"
+  const [provider, setProvider] = useState<ethers.providers.JsonRpcProvider>(
+    new ethers.providers.JsonRpcProvider(
+      "https://rinkeby.infura.io/v3/927415a05250482eaee7eda6db84bd5e"
+    )
   );
 
   // Update tokens balance with user data
@@ -96,15 +58,17 @@ const MainScreen = () => {
   // Change provider when changing networks
   useEffect(() => {
     if (network === "Mainnet") {
-      provider = new ethers.providers.JsonRpcProvider(
-        "https://mainnet.infura.io/v3/927415a05250482eaee7eda6db84bd5e"
+      return setProvider(
+        new ethers.providers.JsonRpcProvider(
+          "https://mainnet.infura.io/v3/927415a05250482eaee7eda6db84bd5e"
+        )
       );
     }
-    if (network === "Rinkeby") {
-      provider = new ethers.providers.JsonRpcProvider(
+    return setProvider(
+      new ethers.providers.JsonRpcProvider(
         "https://rinkeby.infura.io/v3/927415a05250482eaee7eda6db84bd5e"
-      );
-    }
+      )
+    );
   }, [network]);
 
   // Load page, load tokens
@@ -124,18 +88,7 @@ const MainScreen = () => {
   useEffect(() => {
     if (userAddress !== "" && tokenList !== undefined) {
       (async () => {
-        // Update transactions list whenever the user changes address
-        const transactionsData = await getAllUserTransactionsData(
-          userAddress,
-          network
-        );
-        setTransactions({
-          ...transactions,
-          txs: transactionsData.txs,
-          status: transactionsData.status,
-        });
-
-        // Same with tokens balance
+        // Update tokens balance
         const updatedTokensBalance = await updateTokensBalance(
           userAddress,
           tokenList,
@@ -282,59 +235,32 @@ const MainScreen = () => {
               className="w-72 h-16 font-sans text-3xl font-bold text-accentPurple bg-lightBlue"
               onClick={async () => {
                 console.log("Starting transfer");
-                try {
-                  const tx = await getTransferTokenTx(
-                    receiverAddress,
-                    selectedToken.address,
-                    quantityToSend
-                  );
-                  toast(
-                    <TransactionPopup
-                      tx={tx}
-                      quantitySent={quantityToSend}
-                      selectedToken={selectedToken}
-                      network={network}
-                      setUpdateTokensList={setUpdateTokensList}
-                    />
-                  );
-
-                  if (tokenList !== undefined) {
-                    const updatedTokensBalance = await updateTokensBalance(
-                      userAddress,
-                      tokenList,
-                      provider
-                    );
-                    // Reset inputs
-                    setTokenList(updatedTokensBalance);
-                    setSelectedToken({
-                      address: "",
-                      balance: 0,
-                      name: "",
-                      iconUrl: "",
-                    });
-                    setQuantityToSend("");
-                    console.log("Finished transfer");
-                  }
-                } catch (err: any) {
-                  if (err["transaction"] !== undefined) {
-                    const errTyped = err as TxCallException;
-                    console.log(
-                      "EXCEPTION",
-                      errTyped.receipt,
-                      errTyped.transaction,
-                      errTyped.transactionHash
-                    );
-                  } else {
-                    const errTyped = err as TxTransactionReplaced;
-                    console.log(
-                      "REPLACED",
-                      errTyped.cancelled,
-                      errTyped.reason,
-                      errTyped.replacement,
-                      errTyped.receipt
-                    );
-                  }
-                }
+                const tx = await getTransferTokenTx(
+                  receiverAddress,
+                  network,
+                  selectedToken,
+                  quantityToSend
+                );
+                toast(<TransactionPopup tx={tx} />, {
+                  onClose: async () => {
+                    if (tokenList !== undefined) {
+                      const updatedTokensBalance = await updateTokensBalance(
+                        userAddress,
+                        tokenList,
+                        provider
+                      );
+                      // Reset inputs
+                      setTokenList(updatedTokensBalance);
+                    }
+                  },
+                });
+                setSelectedToken({
+                  address: "",
+                  balance: 0,
+                  name: "",
+                  iconUrl: "",
+                });
+                setQuantityToSend("");
               }}
             >
               Send

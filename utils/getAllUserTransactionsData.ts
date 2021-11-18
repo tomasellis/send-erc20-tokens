@@ -1,38 +1,45 @@
 import axios from "axios";
-import checkIfSpedUpOrNewTx from "./checkIfSpedUpOrNewTx";
-import createTxDictionary from "./createTxDictionary";
-import getLocallySavedTransactions from "./getLocallySavedTransactions";
+import { LocalTx, Dictionary } from "./types";
 
 const etherscanApiToken = process.env.NEXT_PUBLIC_ETHERSCAN_API_TOKEN;
 
 const getAllUserTransactionsData = async (
   address: string,
   network: "Mainnet" | "Rinkeby"
-): Promise<SpedUpResult> => {
+): Promise<Dictionary<LocalTx>> => {
   const txEndpoint = `${
     network === "Mainnet" ? etherscanBaseURL : etherscanRinkebyBaseURL
   }?module=account&action=txlist&address=${address}&startblock=9000000&endblock=99999999&offset=25&sort=desc&apikey=${etherscanApiToken}`;
 
-  const res: { data: EtherscanResponse } = await axios.get(txEndpoint);
+  let dictionary: Dictionary<LocalTx> = {};
 
-  // Api data
-  const rawApiTxs = res.data.result;
-  console.log("API TXS", rawApiTxs);
+  try {
+    const res: { data: EtherscanResponse } = await axios.get(txEndpoint);
 
-  // Local data
-  let localTxsDictionary = getLocallySavedTransactions(address);
-  console.log("LOCAL TXS", localTxsDictionary);
+    // Api data
+    const rawApiTxs = res.data.result;
 
-  // Check for change
-  if (localTxsDictionary !== null) {
-    return checkIfSpedUpOrNewTx(localTxsDictionary, rawApiTxs, address);
-  } else {
-    // Create tx dictionary
-    const newTxsDictionary = createTxDictionary(rawApiTxs, address);
-    // Add to local dictionary
-    localStorage.setItem(address, JSON.stringify(newTxsDictionary));
-    console.log("NEW DICTIONARY", newTxsDictionary);
-    return { status: "Same", txs: newTxsDictionary };
+    for (let i = 0; i < rawApiTxs.length; i++) {
+      const tx = rawApiTxs[i];
+      dictionary[tx.nonce] = {
+        status: tx.txreceipt_status === "0" ? "Error" : "Success",
+        changedQuantity: 0,
+        gasLimit: parseInt(tx.gas),
+        gasPrice: parseFloat(tx.gasPrice),
+        hash: tx.hash,
+        network: network,
+        nonce: parseInt(tx.nonce),
+        token: { address: "", balance: 0, iconUrl: "", name: "" },
+        tokenQuantity: 0,
+        to: tx.to,
+        closedToast: true,
+      };
+    }
+
+    return dictionary;
+  } catch (err) {
+    console.log("getAllUserTransactionsDataError", err);
+    return dictionary;
   }
 };
 
@@ -42,15 +49,6 @@ export default getAllUserTransactionsData;
 
 const etherscanBaseURL = "https://api.etherscan.io/api";
 const etherscanRinkebyBaseURL = "https://api-rinkeby.etherscan.io/api";
-
-type Dictionary<T> = {
-  [Key: string]: T;
-};
-
-type SpedUpResult = {
-  status: "Diff" | "Same";
-  txs: Dictionary<EtherscanTransactionResponse>;
-};
 
 type EtherscanResponse = {
   status: string;
@@ -77,5 +75,15 @@ type EtherscanTransactionResponse = {
   cumulativeGasUsed: string;
   gasUsed: string;
   confirmations: string;
-  speedUp?: boolean;
 };
+
+/*
+
+hash
+nonce
+from
+to
+txreceipt_status
+
+
+*/

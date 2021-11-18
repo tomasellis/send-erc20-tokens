@@ -1,4 +1,5 @@
 import { ethers } from "ethers";
+import { Dictionary, LocalTx, MappedToken } from "./types";
 
 const saveTxLocally = (
   tx: ethers.providers.TransactionResponse,
@@ -14,6 +15,8 @@ const saveTxLocally = (
     const userTxs: Dictionary<LocalTx> = JSON.parse(string);
 
     const newTx: LocalTx = {
+      status: "Pending",
+      to: tx.to ?? "",
       hash: tx.hash,
       nonce: tx.nonce,
       token: tokenSent,
@@ -35,25 +38,3 @@ const saveTxLocally = (
 };
 
 export default saveTxLocally;
-
-type LocalTx = {
-  hash: string;
-  nonce: number;
-  tokenQuantity: number;
-  token: MappedToken;
-  changedQuantity: number;
-  gasPrice: number;
-  gasLimit: number;
-  network: "Mainnet" | "Rinkeby";
-};
-
-type MappedToken = {
-  address: string;
-  name: string;
-  iconUrl: string;
-  balance: number;
-};
-
-type Dictionary<T> = {
-  [Key: string]: T;
-};

@@ -15,6 +15,7 @@ const saveTxLocally = (
     const userTxs: Dictionary<LocalTx> = JSON.parse(string);
 
     const newTx: LocalTx = {
+      closedToast: false,
       status: "Pending",
       to: tx.to ?? "",
       hash: tx.hash,

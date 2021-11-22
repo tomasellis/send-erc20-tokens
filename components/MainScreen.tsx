@@ -9,7 +9,14 @@ import { GlobeIcon } from "@heroicons/react/solid";
 import getTransferTokenTx from "../utils/getTransferTokenTx";
 import TransactionPopup from "./TransactionPopup";
 import { toast } from "react-toastify";
-import { EtherscanTransactionResponse } from "../utils/types";
+import {
+  EtherscanTransactionResponse,
+  LocalTx,
+  Dictionary,
+} from "../utils/types";
+import displayTransactionPopup from "../utils/displayTransactionPopup";
+import getLocallySavedTransactions from "../utils/getLocallySavedTransactions";
+import { useInterval } from "../utils/useInterval";
 
 type MappedToken = {
   address: string;
@@ -36,24 +43,9 @@ const MainScreen = () => {
       "https://rinkeby.infura.io/v3/927415a05250482eaee7eda6db84bd5e"
     )
   );
-
-  // Update tokens balance with user data
-  useEffect(() => {
-    if (updateTokensList === true) {
-      (async () => {
-        if (tokenList !== undefined) {
-          const updatedTokensBalance = await updateTokensBalance(
-            userAddress,
-            tokenList,
-            provider
-          );
-          setTokenList(updatedTokensBalance);
-          setUpdateTokensList(false);
-          console.log("UPDATED TOKENS BALANCE");
-        }
-      })();
-    }
-  }, [updateTokensList]);
+  const [locallySavedTxs, setLocallySavedTxs] =
+    useState<Dictionary<LocalTx> | null>(null);
+  const [stillPending, setStillPending] = useState<boolean>(false);
 
   // Change provider when changing networks
   useEffect(() => {
@@ -95,9 +87,35 @@ const MainScreen = () => {
           provider
         );
         setTokenList(updatedTokensBalance);
+
+        // Get local transactions
+        const dictOfLocalTxs = getLocallySavedTransactions(userAddress);
+        setLocallySavedTxs(dictOfLocalTxs);
       })();
     }
   }, [userAddress]);
+
+  // Everytime localTxs change, check for pending ones
+  useEffect(() => {
+    if (locallySavedTxs !== {}) {
+      for (let key in locallySavedTxs) {
+        let tx = locallySavedTxs[key];
+        if (tx.status === "Pending") {
+          if (stillPending === false) setStillPending(true);
+          displayTransactionPopup(tx);
+        }
+      }
+    }
+  }, [locallySavedTxs]);
+
+  // Pool txs whenever there's a tx still pending
+  useEffect(() => {
+    if (stillPending === true) {
+      useInterval(() => {
+        
+      }, 5000);
+    }
+  }, [stillPending]);
 
   return (
     <div
@@ -241,25 +259,18 @@ const MainScreen = () => {
                   selectedToken,
                   quantityToSend
                 );
-                toast(<TransactionPopup tx={tx} />, {
-                  onClose: async () => {
-                    if (tokenList !== undefined) {
-                      const updatedTokensBalance = await updateTokensBalance(
-                        userAddress,
-                        tokenList,
-                        provider
-                      );
-                      // Reset inputs
-                      setTokenList(updatedTokensBalance);
-                    }
-                  },
-                });
+
+                // Display toast
+                displayTransactionPopup(tx);
+
+                // Reset inputs
                 setSelectedToken({
                   address: "",
                   balance: 0,
                   name: "",
                   iconUrl: "",
                 });
+
                 setQuantityToSend("");
               }}
             >
@@ -273,17 +284,3 @@ const MainScreen = () => {
 };
 
 export default MainScreen;
-
-type TxCallException = {
-  transaction: Transaction;
-  transactionHash: string;
-  receipt: EtherscanTransactionResponse;
-};
-
-type TxTransactionReplaced = {
-  hash: string;
-  reason: string;
-  cancelled: boolean;
-  replacement: providers.TransactionResponse;
-  receipt: providers.TransactionReceipt;
-};

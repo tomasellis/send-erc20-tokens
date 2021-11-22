@@ -44,9 +44,11 @@ export default async (
       token: token,
       tokenQuantity: parseFloat(quantitySent),
     };
+
     return localTx;
   } catch (err) {
     console.log("getTransferTokenTxERROR", err);
+
     return {
       changedQuantity: 0,
       closedToast: false,
@@ -56,7 +58,7 @@ export default async (
       network: network,
       nonce: 0,
       status: "Pending",
-      to: "",
+      to: "ERROR",
       token: token,
       tokenQuantity: 0,
     };

@@ -1,8 +1,8 @@
 import { Dictionary, LocalTx } from "./types";
 
-const checkForPastTransactions = (
+const getLocallySavedTransactions = (
   userAddress: string
-): Dictionary<LocalTx | null> => {
+): Dictionary<LocalTx> => {
   const stringTxs = localStorage.getItem(`pastTxFrom${userAddress}`);
 
   const pastTxs: Dictionary<LocalTx> | "" =
@@ -17,4 +17,4 @@ const checkForPastTransactions = (
   }
 };
 
-export default checkForPastTransactions;
+export default getLocallySavedTransactions;

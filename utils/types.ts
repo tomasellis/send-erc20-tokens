@@ -9,6 +9,7 @@ export type LocalTx = {
   network: "Mainnet" | "Rinkeby";
   status: TxStatus;
   to: string;
+  toasted?: boolean;
 };
 
 export type MappedToken = {

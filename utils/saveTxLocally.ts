@@ -1,4 +1,3 @@
-import { ethers } from "ethers";
 import { Dictionary, LocalTx } from "./types";
 
 const saveTxLocally = (
@@ -6,6 +5,9 @@ const saveTxLocally = (
   userAddress: string
 ): Dictionary<LocalTx> => {
   const string = localStorage.getItem(`localTxFrom${userAddress}`);
+
+  // Setup toast state
+  tx.toasted = false;
 
   if (string !== null) {
     // Get old saved txs

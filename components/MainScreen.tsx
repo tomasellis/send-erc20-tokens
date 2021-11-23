@@ -7,25 +7,14 @@ import getAllUserTransactionsFromApi from "../utils/getAllUserTransactionsFromAp
 import checkIfWalletIsConnected from "../utils/checkIfWalletIsConnected";
 import { GlobeIcon } from "@heroicons/react/solid";
 import getTransferTokenTx from "../utils/getTransferTokenTx";
-import TransactionPopup from "./TransactionPopup";
-import { toast } from "react-toastify";
-import {
-  EtherscanTransactionResponse,
-  LocalTx,
-  Dictionary,
-} from "../utils/types";
+import { LocalTx, Dictionary, MappedToken } from "../utils/types";
 import displayTransactionPopup from "../utils/displayTransactionPopup";
 import getLocallySavedTransactions from "../utils/getLocallySavedTransactions";
 import { useInterval } from "../utils/useInterval";
 import getDifferencesBetweenApiAndLocalTxs from "../utils/getDifferencesBetweenApiAndLocalTxs";
 import saveTxLocally from "../utils/saveTxLocally";
-
-type MappedToken = {
-  address: string;
-  name: string;
-  iconUrl: string;
-  balance: number;
-};
+import { shallowCopy } from "@ethersproject/properties";
+import { toast } from "react-toastify";
 
 const MainScreen = () => {
   const [userAddress, setUserAddress] = useState<string>("");
@@ -45,9 +34,13 @@ const MainScreen = () => {
       "https://rinkeby.infura.io/v3/927415a05250482eaee7eda6db84bd5e"
     )
   );
-  const [locallySavedTxs, setLocallySavedTxs] =
-    useState<Dictionary<LocalTx> | null>(null);
-  const [stillPending, setStillPending] = useState<boolean>(false);
+  const [txsToWatch, setTxsToWatch] = useState<Dictionary<LocalTx> | null>(
+    null
+  );
+  const [stillPending, setStillPending] = useState<boolean>(true);
+  const [txOnDisplay, setTxOnDisplay] = useState<
+    Dictionary<"Pending" | "Done">
+  >({});
 
   // Change provider when changing networks
   useEffect(() => {
@@ -92,37 +85,74 @@ const MainScreen = () => {
 
         // Get local transactions
         const dictOfLocalTxs = getLocallySavedTransactions(userAddress);
-        setLocallySavedTxs(dictOfLocalTxs);
+        setTxsToWatch(dictOfLocalTxs);
       })();
     }
   }, [userAddress]);
 
-  // Everytime localTxs change, check for pending ones
+  // Everytime localTxs change, display them properly
   useEffect(() => {
-    if (locallySavedTxs !== {}) {
-      setStillPending(true);
-      for (let key in locallySavedTxs) {
-        let tx = locallySavedTxs[key];
-        displayTransactionPopup(tx, userAddress);
+    if (txsToWatch !== null) {
+      let txsOnDisplayCopy = { ...txOnDisplay };
+      for (let nonce in txsToWatch) {
+        console.log("We displaying toasts now ======>");
+        let tx = txsToWatch[nonce];
+        // Now displaying toasts
+        // If still haven't displayed this tx
+        if (txsOnDisplayCopy[nonce] === undefined) {
+          displayTransactionPopup(tx, userAddress);
+          txsOnDisplayCopy[nonce] =
+            tx.status === "Pending" ? "Pending" : "Done";
+        }
+        // If already displayed tx while it was pending, and the status changed
+        if (txsOnDisplayCopy[nonce] === "Pending" && tx.status !== "Pending") {
+          toast.dismiss(`${tx.nonce}Pending`);
+          displayTransactionPopup(tx, userAddress);
+          txsOnDisplayCopy[nonce] = "Done";
+        }
       }
+      setTxOnDisplay(txsOnDisplayCopy);
     }
-  }, [locallySavedTxs]);
+  }, [txsToWatch]);
 
   // Pool txs whenever there's a tx still pending
   useInterval(
     async () => {
-      console.log("Still pending tx...");
+      console.log("Still pending tx, now pooling...");
+      // Get txs from API
       const txApiDictionary = await getAllUserTransactionsFromApi(
         userAddress,
         network
       );
+
+      // Compare local txs status with api txs
       const diff = getDifferencesBetweenApiAndLocalTxs(
         txApiDictionary,
-        locallySavedTxs
+        txsToWatch
       );
-      setStillPending(false);
+
+      if (typeof diff === "string") {
+        // If nothing changed, keep pooling data
+        // If no tx is pending, stop pooling
+        diff === "KeepPooling" ? setStillPending(true) : setStillPending(false);
+        const shallowCopy = { ...txsToWatch };
+        setTxsToWatch(shallowCopy);
+      } else {
+        // If something changed, update react state to get the machinery rolling
+        let shallowCopy = { ...txsToWatch };
+        for (let nonce in diff) {
+          let diffTx = diff[nonce];
+          shallowCopy[nonce] = diffTx;
+        }
+        setTxsToWatch(shallowCopy);
+
+        localStorage.setItem(
+          `localTxFrom${userAddress}`,
+          JSON.stringify(shallowCopy)
+        );
+      }
     },
-    stillPending === true ? 5000 : undefined
+    stillPending === true ? 10000 : undefined
   );
 
   return (
@@ -188,7 +218,7 @@ const MainScreen = () => {
             <b>{network}</b>
             &#160;
             {userAddress.slice(0, 10)}...
-            {userAddress.slice(userAddress.length - 5, userAddress.length - 1)}
+            {userAddress.slice(userAddress.length - 4, userAddress.length)}
           </div>
         )}
       </div>
@@ -270,21 +300,18 @@ const MainScreen = () => {
 
                 const updatedDictionary = saveTxLocally(tx, userAddress);
 
-                // Display toast
-                displayTransactionPopup(tx, userAddress);
-
                 // Update react state
-                setLocallySavedTxs(updatedDictionary);
+                setTxsToWatch(updatedDictionary);
+                setStillPending(true);
+                // // Reset inputs
+                // setSelectedToken({
+                //   address: "",
+                //   balance: 0,
+                //   name: "",
+                //   iconUrl: "",
+                // });
 
-                // Reset inputs
-                setSelectedToken({
-                  address: "",
-                  balance: 0,
-                  name: "",
-                  iconUrl: "",
-                });
-
-                setQuantityToSend("");
+                // setQuantityToSend("");
               }}
             >
               Send

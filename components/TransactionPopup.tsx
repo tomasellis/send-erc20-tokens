@@ -15,7 +15,7 @@ const TransactionPopup = ({ tx }: { tx: LocalTx }) => {
 
   const etherscanUrl = `https://${baseEtherscanUrl}/tx/${tx.hash}`;
 
-  const timeEstimationUrl = `https://api.${baseEtherscanUrl}/api?module=gastracker&action=gasestimate&gasprice=${
+  const timeEstimationUrl = `https://api.etherscan.io/api?module=gastracker&action=gasestimate&gasprice=${
     tx.gasLimit * tx.gasPrice
   }&apikey=${etherscanApiToken}`;
 

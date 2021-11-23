@@ -3,7 +3,7 @@ import { LocalTx, Dictionary } from "./types";
 
 const etherscanApiToken = process.env.NEXT_PUBLIC_ETHERSCAN_API_TOKEN;
 
-const getAllUserTransactionsData = async (
+const getAllUserTransactionsFromApi = async (
   address: string,
   network: "Mainnet" | "Rinkeby"
 ): Promise<Dictionary<LocalTx>> => {
@@ -32,7 +32,6 @@ const getAllUserTransactionsData = async (
         token: { address: "", balance: 0, iconUrl: "", name: "" },
         tokenQuantity: 0,
         to: tx.to,
-        closedToast: true,
       };
     }
 
@@ -43,7 +42,7 @@ const getAllUserTransactionsData = async (
   }
 };
 
-export default getAllUserTransactionsData;
+export default getAllUserTransactionsFromApi;
 
 // CONSTS
 

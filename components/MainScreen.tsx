@@ -3,7 +3,7 @@ import { ethers, providers, Transaction } from "ethers";
 import connectWallet from "../utils/connectWallet";
 import getTokenList from "../utils/getTokenList";
 import updateTokensBalance from "../utils/updateTokensBalance";
-import getAllUserTransactionsData from "../utils/getAllUserTransactionsData";
+import getAllUserTransactionsFromApi from "../utils/getAllUserTransactionsFromApi";
 import checkIfWalletIsConnected from "../utils/checkIfWalletIsConnected";
 import { GlobeIcon } from "@heroicons/react/solid";
 import getTransferTokenTx from "../utils/getTransferTokenTx";
@@ -17,6 +17,8 @@ import {
 import displayTransactionPopup from "../utils/displayTransactionPopup";
 import getLocallySavedTransactions from "../utils/getLocallySavedTransactions";
 import { useInterval } from "../utils/useInterval";
+import getDifferencesBetweenApiAndLocalTxs from "../utils/getDifferencesBetweenApiAndLocalTxs";
+import saveTxLocally from "../utils/saveTxLocally";
 
 type MappedToken = {
   address: string;
@@ -30,12 +32,12 @@ const MainScreen = () => {
   const [network, setNetwork] = useState<"Mainnet" | "Rinkeby">("Rinkeby");
   const [tokenList, setTokenList] = useState<MappedToken[]>();
   const [selectedToken, setSelectedToken] = useState<MappedToken>({
-    address: "",
+    address: "0x01BE23585060835E02B77ef475b0Cc51aA1e0709",
     iconUrl: "",
     balance: 0,
-    name: "NULL",
+    name: "DAIDEV",
   });
-  const [quantityToSend, setQuantityToSend] = useState<string>("");
+  const [quantityToSend, setQuantityToSend] = useState<string>("1");
   const [receiverAddress, setReceiverAddress] = useState<string>("");
   const [updateTokensList, setUpdateTokensList] = useState<boolean>(false);
   const [provider, setProvider] = useState<ethers.providers.JsonRpcProvider>(
@@ -98,24 +100,30 @@ const MainScreen = () => {
   // Everytime localTxs change, check for pending ones
   useEffect(() => {
     if (locallySavedTxs !== {}) {
+      setStillPending(true);
       for (let key in locallySavedTxs) {
         let tx = locallySavedTxs[key];
-        if (tx.status === "Pending") {
-          if (stillPending === false) setStillPending(true);
-          displayTransactionPopup(tx);
-        }
+        displayTransactionPopup(tx, userAddress);
       }
     }
   }, [locallySavedTxs]);
 
   // Pool txs whenever there's a tx still pending
-  useEffect(() => {
-    if (stillPending === true) {
-      useInterval(() => {
-        
-      }, 5000);
-    }
-  }, [stillPending]);
+  useInterval(
+    async () => {
+      console.log("Still pending tx...");
+      const txApiDictionary = await getAllUserTransactionsFromApi(
+        userAddress,
+        network
+      );
+      const diff = getDifferencesBetweenApiAndLocalTxs(
+        txApiDictionary,
+        locallySavedTxs
+      );
+      setStillPending(false);
+    },
+    stillPending === true ? 5000 : undefined
+  );
 
   return (
     <div
@@ -260,8 +268,13 @@ const MainScreen = () => {
                   quantityToSend
                 );
 
+                const updatedDictionary = saveTxLocally(tx, userAddress);
+
                 // Display toast
-                displayTransactionPopup(tx);
+                displayTransactionPopup(tx, userAddress);
+
+                // Update react state
+                setLocallySavedTxs(updatedDictionary);
 
                 // Reset inputs
                 setSelectedToken({

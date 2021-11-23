@@ -33,7 +33,6 @@ export default async (
 
     const localTx: LocalTx = {
       changedQuantity: 0,
-      closedToast: false,
       gasLimit: tx.gasLimit.toNumber(),
       gasPrice: tx.gasPrice?.toNumber() ?? 0,
       hash: tx.hash,
@@ -51,7 +50,6 @@ export default async (
 
     return {
       changedQuantity: 0,
-      closedToast: false,
       gasLimit: 0,
       gasPrice: 0,
       hash: "ERROR",

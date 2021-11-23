@@ -9,7 +9,8 @@ export type LocalTx = {
   network: "Mainnet" | "Rinkeby";
   status: TxStatus;
   to: string;
-  toasted?: boolean;
+  canceled?: boolean;
+  boosted?: boolean;
 };
 
 export type MappedToken = {
@@ -44,7 +45,7 @@ export type EtherscanTransactionResponse = {
   confirmations: string;
 };
 
-export type TxStatus = "Pending" | "Success" | "Error";
+export type TxStatus = "Pending" | "Success" | "Cancelled" | "Error";
 
 // type TxCallException = {
 //   transaction: Transaction;

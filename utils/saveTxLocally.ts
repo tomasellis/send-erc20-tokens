@@ -6,9 +6,6 @@ const saveTxLocally = (
 ): Dictionary<LocalTx> => {
   const string = localStorage.getItem(`localTxFrom${userAddress}`);
 
-  // Setup toast state
-  tx.toasted = false;
-
   if (string !== null) {
     // Get old saved txs
     const userTxs: Dictionary<LocalTx> = JSON.parse(string);

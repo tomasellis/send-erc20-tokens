@@ -33,7 +33,6 @@ const getDifferencesBetweenApiAndLocalTxs = (
           console.log("This is the Tx before", localTxs[nonce]);
           localTxs[nonce] = {
             ...apiTxs[nonce],
-            toasted: false,
             network: localTxs[nonce].network,
             token: localTxs[nonce].token,
             tokenQuantity: localTxs[nonce].tokenQuantity,

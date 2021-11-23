@@ -19,7 +19,9 @@ const TransactionPopup = ({ tx }: { tx: LocalTx }) => {
     tx.gasLimit * tx.gasPrice
   }&apikey=${etherscanApiToken}`;
 
-  const [status, setStatus] = useState<TxStatus>(tx.status);
+  const [status, setStatus] = useState<TxStatus>(
+    tx.canceled === true ? "Cancelled" : tx.status
+  );
   const [time, setTime] = useState<string>("");
 
   useEffect(() => {
@@ -38,6 +40,8 @@ const TransactionPopup = ({ tx }: { tx: LocalTx }) => {
         return "Error";
       case "Pending":
         return "Pending";
+      case "Cancelled":
+        return "Canceled";
       default:
         return "";
     }
@@ -51,6 +55,8 @@ const TransactionPopup = ({ tx }: { tx: LocalTx }) => {
         return "Done!";
       case "Error":
         return "None";
+      case "Cancelled":
+        return "Never";
       default:
         return "";
     }
@@ -64,8 +70,25 @@ const TransactionPopup = ({ tx }: { tx: LocalTx }) => {
         return "#00C42B";
       case "Error":
         return "#F60C36";
+      case "Cancelled":
+        return "#F60C36";
       default:
         return "FAFAFA";
+    }
+  };
+
+  const setFlavourText = (status: TxStatus): string => {
+    switch (status) {
+      case "Pending":
+        return "Sending";
+      case "Success":
+        return "Sent";
+      case "Error":
+        return "Failed send";
+      case "Cancelled":
+        return "Cancelled";
+      default:
+        return "Pending";
     }
   };
 
@@ -82,12 +105,7 @@ const TransactionPopup = ({ tx }: { tx: LocalTx }) => {
       />
       <span className="text-sm pt-3 text-textGrey flex-1 flex hover:underline hover:text-lightBlue">
         <a href={etherscanUrl} target={"_blank"} className="flex-1 flex">
-          {status === "Pending"
-            ? "Sending"
-            : status === "Success"
-            ? "Sent"
-            : "Sending"}{" "}
-          &#160;<b>{tx.tokenQuantity}</b>&#160;
+          {setFlavourText(status)} &#160;<b>{tx.tokenQuantity}</b>&#160;
           <Icon>
             <img src={tx.token.iconUrl} width="20px"></img>
           </Icon>

@@ -22,6 +22,7 @@ const getAllUserTransactionsFromApi = async (
     for (let i = 0; i < rawApiTxs.length; i++) {
       const tx = rawApiTxs[i];
       dictionary[tx.nonce] = {
+        canceled: tx.input === "0x" ? true : false,
         status: tx.txreceipt_status === "0" ? "Error" : "Success",
         changedQuantity: 0,
         gasLimit: parseInt(tx.gas),

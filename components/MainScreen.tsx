@@ -165,6 +165,10 @@ const MainScreen = () => {
         id="Banner"
         className="w-full h-auto flex justify-end bg-bannerPurple"
       >
+        <div className="w-full flex items-center self-center bg-yellow-300">
+          <button>Send token</button>
+          <button>Transaction History</button>
+        </div>
         {userAddress === "" ? (
           <button
             className="px-3 py-1 my-2 mr-3 rounded-xl text-accentPurple border-2 border-accentPurple hover:bg-accentPurple hover:text-bannerPurple"

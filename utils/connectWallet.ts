@@ -18,7 +18,8 @@ const connectWallet = async (): Promise<ConnectWalletResponse> => {
 
     return accounts[0];
   } catch (error) {
-    console.log(error);
+    alert("Error while connecting wallet");
+    console.log("Error while connecting wallet", error);
     return "ERROR";
   }
 };

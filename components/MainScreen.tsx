@@ -1,20 +1,17 @@
 import react, { useEffect, useState } from "react";
-import { ethers, providers, Transaction } from "ethers";
+import { ethers } from "ethers";
 import connectWallet from "../utils/connectWallet";
 import getTokenList from "../utils/getTokenList";
 import updateTokensBalance from "../utils/updateTokensBalance";
 import getAllUserTransactionsFromApi from "../utils/getAllUserTransactionsFromApi";
 import checkIfWalletIsConnected from "../utils/checkIfWalletIsConnected";
-import { GlobeIcon } from "@heroicons/react/solid";
-import getTransferTokenTx from "../utils/getTransferTokenTx";
-import { LocalTx, Dictionary, MappedToken } from "../utils/types";
 import displayTransactionPopup from "../utils/displayTransactionPopup";
 import getLocallySavedTransactions from "../utils/getLocallySavedTransactions";
-import { useInterval } from "../utils/useInterval";
 import getDifferencesBetweenApiAndLocalTxs from "../utils/getDifferencesBetweenApiAndLocalTxs";
-import saveTxLocally from "../utils/saveTxLocally";
-import { shallowCopy } from "@ethersproject/properties";
+import { LocalTx, Dictionary, MappedToken } from "../utils/types";
+import { useInterval } from "../utils/useInterval";
 import { toast } from "react-toastify";
+import Landing from "../components/MainScreenComponents/Landing";
 
 const MainScreen = () => {
   const [userAddress, setUserAddress] = useState<string>("");
@@ -157,23 +154,13 @@ const MainScreen = () => {
 
   return (
     <div
-      id="MainScreen"
+      id="Landing"
+      style={{
+        background: "linear-gradient(180deg, #FBF9FE 0%, #F8F1FF 100%)",
+      }}
       className="w-full h-full flex-1 flex flex-row flex-nowrap justify-center items-center"
     >
-      <div className="w-1/2 h-full flex-1 flex flex-col justify-center items-center">
-        <span className="bg-pink-500 text-lightPurple text-5xl w-3/4 pl-20 pb-16">
-          Send any curated ERC20 token.
-        </span>
-        <button
-          className="bg-lightPurple text-accentPurple px-3 py-2 text-3xl font-light rounded-full"
-          onClick={async () => await connectWallet()}
-        >
-          Connect Wallet
-        </button>
-      </div>
-      <div className="w-1/2 h-full flex-1 flex justify-center items-center">
-        Screen right
-      </div>
+      <Landing setUserAddress={setUserAddress} />
     </div>
   );
 };

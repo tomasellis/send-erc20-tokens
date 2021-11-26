@@ -158,170 +158,21 @@ const MainScreen = () => {
   return (
     <div
       id="MainScreen"
-      className="w-full h-full flex-1 flex flex-col flex-nowrap items-center"
+      className="w-full h-full flex-1 flex flex-row flex-nowrap justify-center items-center"
     >
-      {/* Banner */}
-      <div
-        id="Banner"
-        className="w-full h-auto flex justify-end bg-bannerPurple"
-      >
-        <div className="w-full flex items-center self-center bg-yellow-300">
-          <button>Send token</button>
-          <button>Transaction History</button>
-        </div>
-        {userAddress === "" ? (
-          <button
-            className="px-3 py-1 my-2 mr-3 rounded-xl text-accentPurple border-2 border-accentPurple hover:bg-accentPurple hover:text-bannerPurple"
-            onClick={async () => {
-              const address = await connectWallet();
-              switch (address) {
-                case "ERROR":
-                  return alert("Error while connecting wallet");
-                case "NOMETAMASK":
-                  return alert("Please install metamask");
-                default:
-                  return setUserAddress(address);
-              }
-            }}
-          >
-            Connect wallet
-          </button>
-        ) : (
-          <div
-            onClick={async () => {
-              // @ts-ignore
-              const { ethereum } = window;
-              try {
-                await ethereum.request({
-                  method: "wallet_requestPermissions",
-                  params: [
-                    {
-                      eth_accounts: {},
-                    },
-                  ],
-                });
-                const address = await ethereum.request({
-                  method: "eth_requestAccounts",
-                  params: [
-                    {
-                      eth_accounts: {},
-                    },
-                  ],
-                });
-                console.log("WALLET", address[0]);
-                setUserAddress(address[0]);
-              } catch (err) {
-                alert("Please check your wallet");
-                console.log("ALREADY CONNECTED WALLET", err);
-              }
-            }}
-            className="flex px-3 py-1 my-2 mr-3 rounded-xl text-accentPurple  border-accentPurple bg-lightPurple hover:bg-accentPurple hover:text-bannerPurple cursor-pointer"
-          >
-            <GlobeIcon width="20px" color="lightgreen" />
-            &#160;
-            <b>{network}</b>
-            &#160;
-            {userAddress.slice(0, 10)}...
-            {userAddress.slice(userAddress.length - 4, userAddress.length)}
-          </div>
-        )}
-      </div>
-      {/* Transfer UI */}
-      <div className="h-full w-full flex flex-col justify-center items-center">
-        <div
-          id="MainBox"
-          style={{
-            borderRadius: "3px",
-            width: "436px",
-            height: "500px",
-          }}
-          className="border border-borderGrey px-9 flex flex-col items-center font-sans"
+      <div className="w-1/2 h-full flex-1 flex flex-col justify-center items-center">
+        <span className="bg-pink-500 text-lightPurple text-5xl w-3/4 pl-20 pb-16">
+          Send any curated ERC20 token.
+        </span>
+        <button
+          className="bg-lightPurple text-accentPurple px-3 py-2 text-3xl font-light rounded-full"
+          onClick={async () => await connectWallet()}
         >
-          <span className="text-2xl text-textGrey pt-5">
-            Send an ERC20 token
-          </span>
-          <hr
-            style={{
-              borderTop: "1px solid #999999",
-              width: "95%",
-              height: "0px",
-            }}
-          />
-          <span className="text-lg pt-3 text-textGrey">Select a token</span>
-          <span className="text-lg pt-3 text-textGrey">How much to send?</span>
-          <div className="flex flex-col">
-            <input
-              onChange={(e) => {
-                const numberValue = parseFloat(e.target.value);
-                if (isNaN(numberValue)) return setQuantityToSend("");
-                numberValue >= 0
-                  ? numberValue <= selectedToken.balance
-                    ? setQuantityToSend(e.target.value)
-                    : setQuantityToSend(selectedToken.balance.toString())
-                  : setQuantityToSend("");
-              }}
-              placeholder="0"
-              value={quantityToSend}
-              style={{ maxWidth: "150px", borderRadius: "3px" }}
-              className="border border-borderGrey py-5 mt-2 font-sans text-center text-3xl "
-            />
-            <div
-              onClick={() =>
-                setQuantityToSend(selectedToken.balance.toString())
-              }
-              style={{
-                zIndex: 999,
-                width: "fit-content",
-                top: "-25px",
-                left: "105px",
-              }}
-              className="relative text-lightBlue z-50 hover:text-pink-600 cursor-pointer"
-            >
-              <span className="font-bold">MAX</span>
-            </div>
-          </div>
-          <span className="text-lg text-textGrey">
-            Input the address of the receiver
-          </span>
-          <input
-            onChange={(e) => setReceiverAddress(e.target.value)}
-            placeholder={"Type here..."}
-            style={{ minWidth: "350px", height: "30px", borderRadius: "3px" }}
-            className="border border-borderGrey py-5 mt-2 font-sans text-center text-sm"
-          />
-          <div className="flex-1 flex flex-col justify-center items-center">
-            <button
-              style={{ borderRadius: "3px" }}
-              className="w-72 h-16 font-sans text-3xl font-bold text-accentPurple bg-lightBlue"
-              onClick={async () => {
-                console.log("Starting transfer");
-                const tx = await getTransferTokenTx(
-                  receiverAddress,
-                  network,
-                  selectedToken,
-                  quantityToSend
-                );
-
-                const updatedDictionary = saveTxLocally(tx, userAddress);
-
-                // Update react state
-                setTxsToWatch(updatedDictionary);
-                setStillPending(true);
-                // // Reset inputs
-                // setSelectedToken({
-                //   address: "",
-                //   balance: 0,
-                //   name: "",
-                //   iconUrl: "",
-                // });
-
-                // setQuantityToSend("");
-              }}
-            >
-              Send
-            </button>
-          </div>
-        </div>
+          Connect Wallet
+        </button>
+      </div>
+      <div className="w-1/2 h-full flex-1 flex justify-center items-center">
+        Screen right
       </div>
     </div>
   );

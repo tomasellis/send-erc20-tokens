@@ -12,8 +12,10 @@ import { LocalTx, Dictionary, MappedToken } from "../utils/types";
 import { useInterval } from "../utils/useInterval";
 import { toast } from "react-toastify";
 import Landing from "../components/MainScreenComponents/Landing";
+import App from "../components/MainScreenComponents/App";
 
 const MainScreen = () => {
+  const [wentThroughLanding, setWentThroughLanding] = useState<boolean>(false);
   const [userAddress, setUserAddress] = useState<string>("");
   const [network, setNetwork] = useState<"Mainnet" | "Rinkeby">("Rinkeby");
   const [tokenList, setTokenList] = useState<MappedToken[]>();
@@ -38,7 +40,6 @@ const MainScreen = () => {
   const [txOnDisplay, setTxOnDisplay] = useState<
     Dictionary<"Pending" | "Done">
   >({});
-
   // Change provider when changing networks
   useEffect(() => {
     if (network === "Mainnet") {
@@ -158,9 +159,13 @@ const MainScreen = () => {
       style={{
         background: "linear-gradient(180deg, #FBF9FE 0%, #F8F1FF 100%)",
       }}
-      className="w-full h-full flex-1 flex flex-row flex-nowrap justify-center items-center"
+      className="w-full h-full flex-1 flex flex-row flex-nowrap justify-center"
     >
-      <Landing setUserAddress={setUserAddress} />
+      {wentThroughLanding === false ? (
+        <Landing setWentThroughLanding={setWentThroughLanding} />
+      ) : (
+        <App />
+      )}
     </div>
   );
 };

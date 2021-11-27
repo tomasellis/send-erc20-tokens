@@ -6,12 +6,20 @@ export type LocalTx = {
   changedQuantity: number;
   gasPrice: number;
   gasLimit: number;
-  network: "Mainnet" | "Rinkeby";
+  network: Network;
   status: TxStatus;
   to: string;
   canceled?: boolean;
   boosted?: boolean;
 };
+
+export type Network =
+  | "Mainnet"
+  | "Ropsten"
+  | "Rinkeby"
+  | "Goerli"
+  | "Kovan"
+  | "ERROR";
 
 export type MappedToken = {
   address: string;
@@ -47,6 +55,10 @@ export type EtherscanTransactionResponse = {
 
 export type TxStatus = "Pending" | "Success" | "Cancelled" | "Error";
 
+export type ConnectWalletResponse = {
+  address: "NOMETAMASK" | "ERROR" | string;
+  network: Network;
+};
 // type TxCallException = {
 //   transaction: Transaction;
 //   transactionHash: string;

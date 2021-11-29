@@ -1,5 +1,5 @@
 import { toast } from "react-toastify";
-import TransactionPopup from "../components/TransactionPopup";
+import TransactionPopup from "../components/MainScreenComponents/AppComponents/TransactionPopup";
 import getLocallySavedTransactions from "./getLocallySavedTransactions";
 import { LocalTx } from "./types";
 

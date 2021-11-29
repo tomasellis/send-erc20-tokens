@@ -5,7 +5,7 @@ import axios from "axios";
 import LinearProgress from "@mui/material/LinearProgress";
 import { Box } from "@mui/system";
 import { Transaction } from "ethers";
-import { LocalTx, TxStatus } from "../utils/types";
+import { LocalTx, TxStatus } from "../../../utils/types";
 
 const TransactionPopup = ({ tx }: { tx: LocalTx }) => {
   const etherscanApiToken = process.env.NEXT_PUBLIC_ETHERSCAN_API_TOKEN;

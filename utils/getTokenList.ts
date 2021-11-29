@@ -1,8 +1,7 @@
 import axios, { AxiosResponse } from "axios";
+import { Network, MappedToken } from "../utils/types";
 
-const getTokenList = async (
-  network: "Mainnet" | "Rinkeby"
-): Promise<MappedToken[]> => {
+const getTokenList = async (network: Network): Promise<MappedToken[]> => {
   try {
     if (network === "Mainnet") {
       const { data }: AxiosResponse<TokenData> = await axios({
@@ -26,7 +25,7 @@ const getTokenList = async (
       });
 
       return mappedTokens;
-    } else {
+    } else if (network === "Rinkeby") {
       let mappedTokens: MappedToken[] = [];
 
       let tk: MappedToken = {
@@ -50,6 +49,8 @@ const getTokenList = async (
 
       return mappedTokens;
       // TO FIX: remove test tokens -----------------------------------------
+    } else {
+      return [];
     }
   } catch (err) {
     console.log("getTokenList", err);
@@ -78,13 +79,6 @@ type Token = {
   status: string;
   symbolMultihash: string;
   ticker: string;
-};
-
-type MappedToken = {
-  address: string;
-  name: string;
-  iconUrl: string;
-  balance: number;
 };
 
 const graphUrl = `https://api.thegraph.com/subgraphs/name/kleros/t2cr`;

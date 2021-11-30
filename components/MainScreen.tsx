@@ -159,7 +159,7 @@ const MainScreen = () => {
       style={{
         background: "linear-gradient(180deg, #FBF9FE 0%, #F8F1FF 100%)",
       }}
-      className="w-full h-full flex-1 flex flex-row flex-nowrap justify-center"
+      className="w-full h-full flex-1 flex flex-col flex-nowrap justify-center"
     >
       {wentThroughLanding === false ? (
         <Landing setWentThroughLanding={setWentThroughLanding} />

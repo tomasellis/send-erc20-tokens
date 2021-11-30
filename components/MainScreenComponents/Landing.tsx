@@ -8,7 +8,7 @@ const Landing = ({
   setWentThroughLanding: react.Dispatch<react.SetStateAction<boolean>>;
 }) => {
   return (
-    <>
+    <div className="flex-1 flex flex-row flex-nowrap">
       <div className="w-1/2 h-full flex-1 flex flex-col justify-center items-start ml-40">
         <span className="text-lightPurple text-5xl mb-12">
           Send any curated <br /> ERC20 token.
@@ -52,7 +52,7 @@ const Landing = ({
           />
         </div>
       </div>
-    </>
+    </div>
   );
 };
 

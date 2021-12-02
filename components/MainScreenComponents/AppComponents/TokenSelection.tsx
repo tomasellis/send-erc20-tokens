@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import filterTokensBySearchTerm from "../../../utils/filterTokensBySearchTerm";
 import getTokenList from "../../../utils/getTokenList";
 import { MappedToken, Network } from "../../../utils/types";
+import SingleTokenDisplay from "./SingleTokenDisplay";
 
 const TokenSelection = ({
   userAddress,
@@ -53,7 +54,7 @@ const TokenSelection = ({
       <div>
         <ul>
           {searchTerm === ""
-            ? fullTokensList.map((token) => <li>{token.name}</li>)
+            ? fullTokensList.map((token) => <li><SingleTokenDisplay  /></li>)
             : filteredTokensList.map((token) => <li>{token.name}</li>)}
         </ul>
       </div>
